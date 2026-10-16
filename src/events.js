@@ -127,7 +127,7 @@
     imageFrame.setAttribute('aria-hidden', 'true');
     const image = document.createElement('img');
     image.className = 'event-card__image';
-    image.src = `./src/assets/events/${event.slug}.png`;
+    image.src = `./src/assets/events/${event.slug}.webp`;
     image.alt = '';
     image.loading = 'lazy';
     image.decoding = 'async';

@@ -20,6 +20,12 @@ def _copy_source_tree(source: Path, destination: Path) -> None:
     for path in source.iterdir():
         if path.name.startswith(".") or path.name == "data" or path.suffix.lower() == ".map":
             continue
+        # Serve the optimized derivatives from src/assets/events, not the large source uploads.
+        if source == ROOT / "src" and path.is_dir() and path.name == "Cards":
+            continue
+        # Civil QR slots remain placeholders until the user asks to enable them.
+        if source.name.lower() == "upi" and path.name.lower() in {"civil 1.png", "civil 2.png"}:
+            continue
         target = destination / path.name
         if path.is_dir():
             _copy_source_tree(path, target)
