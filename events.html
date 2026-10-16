@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="Explore Udbhava ’26 events across CSE, ECE, EEE, Mechanical, Civil and AI & Data Science.">
+  <title>Events — UDBHAVA ’26</title>
+  <link rel="icon" href="./favicon.ico" type="image/x-icon">
+  <link rel="icon" href="./favicon.png" type="image/png" sizes="512x512">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./typography.css?v=larger-display-scale-20261014">
+  <link rel="stylesheet" href="./events.css?v=registration-states-prize-pool-20261015">
+  <link rel="stylesheet" href="./src/site-footer.css">
+</head>
+<body class="events-body">
+  <canvas id="c" aria-hidden="true"></canvas>
+  <main class="events-page">
+    <header class="topbar events-topbar">
+      <a class="brand" href="./index.html#home" aria-label="Udbhava 2026 home">
+        <span class="brand-title">UDBHAVA <span>’26</span><i></i></span>
+        <span class="brand-subtitle">COLLEGE TECHFEST</span>
+      </a>
+      <nav class="desktop-nav" aria-label="Main navigation">
+        <a href="./index.html#home">HOME</a><a class="active" href="./events.html" aria-current="page">EVENTS</a><a class="register" href="./index.html#register">REGISTER</a>
+      </nav>
+      <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="events-mobile-nav"><span></span><span></span><span></span></button>
+    </header>
+    <nav class="mobile-nav" id="events-mobile-nav" aria-label="Mobile navigation" inert>
+      <a href="./index.html#home">HOME</a><a href="./events.html" aria-current="page">EVENTS</a><a href="./index.html#register">REGISTER</a>
+    </nav>
+
+    <section class="events-hero" aria-labelledby="events-title">
+      <div class="events-hero__copy">
+        <span class="events-index">// UDBHAVA 2026</span>
+        <h1 id="events-title">EVENTS</h1>
+        <p class="events-hero-caption">IDEAS. PEOPLE. POSSIBILITIES.</p>
+      </div>
+      <aside class="events-hero__note"><span>MMXXVI</span><p>A LINEUP OF COMPETITIONS, WORKSHOPS, LECTURES AND SHOWS ACROSS ALL DEPARTMENTS.</p></aside>
+      <span class="events-cross events-cross--hero" aria-hidden="true">+</span>
+    </section>
+
+    <section class="event-browser" aria-label="Browse events">
+      <div class="events-filters">
+        <div class="filter-group filter-group--category">
+          <p class="filter-group__label">REGISTRATION MODE</p>
+          <label class="category-select" for="category-filter">
+            <select id="category-filter" aria-label="Filter events by registration mode" disabled>
+              <option value="all">All registration modes</option>
+              <option value="paid_online">Paid online</option>
+              <option value="free_online">Free online</option>
+              <option value="on_spot">On spot</option>
+            </select>
+            <span class="category-select__icon" aria-hidden="true">⌄</span>
+          </label>
+        </div>
+        <div class="filter-group filter-group--departments">
+          <p class="filter-group__label">DEPARTMENT</p>
+          <div class="department-tabs" id="department-tabs" role="group" aria-label="Choose a department">
+            <p class="loading-state" role="status">Loading departments and events…</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="event-listing">
+        <div class="results-tools">
+          <p class="results-summary" id="results-summary" aria-live="polite"></p>
+          <label class="event-search"><span aria-hidden="true">⌕</span><input id="event-search" type="search" autocomplete="off" placeholder="Search events…" aria-label="Search events"></label>
+        </div>
+        <div class="event-grid" id="event-grid" aria-live="polite" aria-busy="true">
+          <p class="loading-state" role="status">Loading event cards…</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <dialog class="event-dialog" id="event-detail-dialog" aria-labelledby="dialog-title">
+    <div class="dialog-inner">
+      <button class="dialog-close" type="button" aria-label="Close event details">×</button>
+      <p class="dialog-kicker" id="dialog-kicker"></p>
+      <h2 id="dialog-title"></h2>
+      <p class="dialog-subtitle" id="dialog-subtitle"></p>
+      <p class="dialog-tagline" id="dialog-tagline"></p>
+      <p class="dialog-description" id="dialog-description"></p>
+      <div class="dialog-facts" id="dialog-facts"></div>
+      <section class="dialog-section" id="dialog-prizes-section" hidden><h3>PRIZES</h3><ul id="dialog-prizes"></ul></section>
+      <section class="dialog-section" id="dialog-rules-section" hidden><h3>FORMAT &amp; RULES</h3><ul id="dialog-rules"></ul></section>
+      <p class="dialog-registration" id="dialog-registration"></p>
+    </div>
+  </dialog>
+
+  <script defer src="./src/nebula-engine.js?v=continuous-section-stream-20261014"></script>
+  <script type="module" src="./src/events.js?v=registration-states-prize-pool-20261015"></script>
+  <script defer src="./src/site-footer.js?v=20261014-nav4"></script>
+</body>
+</html>

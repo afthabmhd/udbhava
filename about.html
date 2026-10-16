@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="Meet Sree Narayana Guru College of Engineering and Technology, the institution behind Udbhava ’26.">
+  <title>About — UDBHAVA ’26</title>
+  <link rel="icon" href="./favicon.ico" type="image/x-icon">
+  <link rel="icon" href="./favicon.png" type="image/png" sizes="512x512">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./about.css">
+  <link rel="stylesheet" href="./src/site-footer.css">
+  <link rel="stylesheet" href="./typography.css">
+</head>
+<body class="about-body">
+  <canvas id="c" aria-hidden="true"></canvas>
+  <main class="about-main">
+    <section class="about-page" aria-labelledby="about-title">
+      <header class="topbar about-topbar">
+        <a class="brand" href="./index.html#home" aria-label="Udbhava 2026 home">
+          <span class="brand-title">UDBHAVA <span>’26</span><i></i></span>
+          <span class="brand-subtitle">COLLEGE TECHFEST</span>
+        </a>
+        <nav class="desktop-nav" aria-label="Main navigation">
+          <a href="./index.html#home">HOME</a><a href="./events.html">EVENTS</a><a class="register" href="./index.html#register">REGISTER</a>
+        </nav>
+        <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="about-mobile-nav"><span></span><span></span><span></span></button>
+      </header>
+      <nav class="mobile-nav" id="about-mobile-nav" aria-label="Mobile navigation" inert>
+        <a href="./index.html#home">HOME</a><a href="./events.html">EVENTS</a><a href="./index.html#register">REGISTER</a>
+      </nav>
+
+      <div class="about-annotation about-annotation--right" aria-hidden="true"><span>IDEAS</span><span>PEOPLE</span><span>BEYOND</span><i></i></div>
+      <div class="about-content">
+        <header class="about-heading">
+          <p class="about-index"><span>01</span><i></i></p>
+          <h1 id="about-title"><span>ABOUT</span> <em>US</em></h1>
+          <p class="about-subtitle">THE PEOPLE. THE PLACE. THE POSSIBILITIES.</p>
+        </header>
+
+        <section class="college-profile" aria-labelledby="college-title">
+          <figure class="college-frame">
+            <img src="./src/assets/college.webp" width="900" height="525" alt="Sree Narayana Guru College of Engineering and Technology campus in Payyanur, Kerala" fetchpriority="high">
+            <figcaption class="campus-label">SNGCET<br>PAYYANUR</figcaption>
+            <span class="frame-corner frame-corner--tl" aria-hidden="true"></span>
+            <span class="frame-corner frame-corner--tr" aria-hidden="true"></span>
+            <span class="frame-corner frame-corner--bl" aria-hidden="true"></span>
+            <span class="frame-corner frame-corner--br" aria-hidden="true"></span>
+          </figure>
+
+          <div class="college-copy">
+            <p class="about-index about-index--college"><span>02</span><i></i></p>
+            <h2 id="college-title">SREE NARAYANA GURU<br class="desktop-break"> COLLEGE OF ENGINEERING<br class="desktop-break"> AND TECHNOLOGY</h2>
+            <p class="college-description">Sree Narayana Guru College of Engineering and Technology (SNGCET), Payyanur, is a self-financing engineering college in Kerala, affiliated to APJ Abdul Kalam Technological University and managed by the Sree Narayana Trusts. The institution is committed to academic excellence, innovation, and holistic development, providing a vibrant platform for students to explore, create and grow.</p>
+          </div>
+        </section>
+
+        <section class="institution-facts" aria-label="Institutional information">
+          <article class="fact-card">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M6 19 24 7l18 12H6Zm4 4h5v14h-5zm11 0h6v14h-6zm12 0h5v14h-5zM6 41h36M4 45h40"/><path d="M19 15h10"/></svg>
+            <div><p>ESTABLISHED</p><h3>2003</h3></div>
+          </article>
+          <article class="fact-card">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M39 20c0 11-15 24-15 24S9 31 9 20a15 15 0 1 1 30 0Z"/><circle cx="24" cy="20" r="5"/></svg>
+            <div><p>LOCATION</p><h3>PAYYANUR</h3><small>KANNUR, KERALA</small></div>
+          </article>
+          <article class="fact-card">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><path d="m4 16 20-9 20 9-20 9L4 16Z"/><path d="M12 21v11c7 6 17 6 24 0V21M44 16v15M20 40h8m-4-5v5M16 44h16"/></svg>
+            <div><p>AFFILIATED TO</p><h3>KTU</h3><small>APJ ABDUL KALAM<br>TECHNOLOGICAL UNIVERSITY</small></div>
+          </article>
+          <article class="fact-card">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="12" r="6"/><circle cx="10" cy="18" r="4"/><circle cx="38" cy="18" r="4"/><path d="M13 39v-5c0-7 5-12 11-12s11 5 11 12v5H13Zm-9 0v-4c0-5 3-8 8-9m32 13v-4c0-5-3-8-8-9M18 40v-5m12 5v-5"/></svg>
+            <div><p>MANAGED BY</p><h3>SREE NARAYANA<br>TRUSTS</h3></div>
+          </article>
+        </section>
+
+        <section class="association-section" aria-labelledby="association-title">
+          <div class="association-heading">
+            <p class="about-index"><span>03</span><i></i></p>
+            <h2 id="association-title">DEPARTMENT ASSOCIATIONS</h2>
+          </div>
+          <div class="association-grid">
+            <figure class="association-mark"><img src="./src/assets/logos/arcvil.png" alt="Arcvil — Civil Engineering" loading="lazy"></figure>
+            <figure class="association-mark"><img src="./src/assets/logos/techranti.png" alt="Techkranti — Computer Science and Engineering" loading="lazy"></figure>
+            <figure class="association-mark"><img src="./src/assets/logos/dyuthi.png" alt="Dhyuthi — Electrical and Electronics Engineering" loading="lazy"></figure>
+            <figure class="association-mark"><img src="./src/assets/logos/technova.png" alt="Technova — Electronics and Communication Engineering" loading="lazy"></figure>
+            <figure class="association-mark"><img src="./src/assets/logos/sankalpa.png" alt="Sankalpa — Autonomous Systems" loading="lazy"></figure>
+            <figure class="association-mark"><img src="./src/assets/logos/yantra.png" alt="Yantra — Mechanical Engineering" loading="lazy"></figure>
+          </div>
+        </section>
+      </div>
+      <span class="about-cross about-cross--one" aria-hidden="true">+</span>
+      <span class="about-cross about-cross--two" aria-hidden="true">+</span>
+      <span class="about-cross about-cross--three" aria-hidden="true">+</span>
+    </section>
+  </main>
+  <script defer src="./src/nebula-engine.js?v=continuous-section-stream-20261014"></script>
+  <script defer src="./src/about.js"></script>
+  <script defer src="./src/site-footer.js?v=20261014-nav4"></script>
+</body>
+</html>

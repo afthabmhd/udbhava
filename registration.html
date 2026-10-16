@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="Register for a Udbhava ’26 event.">
+  <title>Event Registration — UDBHAVA ’26</title>
+  <link rel="icon" href="./favicon.ico" type="image/x-icon">
+  <link rel="icon" href="./favicon.png" type="image/png" sizes="512x512">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./typography.css">
+  <link rel="stylesheet" href="./events.css">
+  <link rel="stylesheet" href="./registration.css">
+</head>
+<body class="events-body register-body">
+  <canvas id="c" aria-hidden="true"></canvas>
+  <main class="events-page">
+    <header class="topbar events-topbar">
+      <a class="brand" href="/index.html#home" aria-label="Udbhava 2026 home">
+        <span class="brand-title">UDBHAVA <span>’26</span><i></i></span>
+        <span class="brand-subtitle">COLLEGE TECHFEST</span>
+      </a>
+      <nav class="desktop-nav" aria-label="Main navigation">
+        <a href="/index.html#home">HOME</a><a href="/events.html">EVENTS</a><a class="register active" href="/events.html">REGISTER</a>
+      </nav>
+      <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="registration-mobile-nav"><span></span><span></span><span></span></button>
+    </header>
+    <nav class="mobile-nav" id="registration-mobile-nav" aria-label="Mobile navigation" inert>
+      <a href="/index.html#home">HOME</a><a href="/events.html">EVENTS</a><a href="/events.html" aria-current="page">REGISTER</a>
+    </nav>
+
+    <section class="registration-hero" aria-labelledby="registration-title">
+      <span class="registration-eyebrow">// UDBHAVA 2026 · EVENT REGISTRATION</span>
+      <h1 id="registration-title">REGISTRATION</h1>
+      <p>One entry per participant or team. Team events are submitted by the team leader.</p>
+    </section>
+
+    <section class="registration-shell" aria-live="polite" aria-busy="true">
+      <div class="registration-loading" id="registration-loading" role="status">Loading event details…</div>
+      <div id="registration-event" hidden>
+        <div class="registration-event-heading">
+          <div>
+            <p class="registration-kicker" id="registration-department"></p>
+            <h2 id="event-name"></h2>
+          </div>
+          <div class="registration-fee" id="event-fee"></div>
+        </div>
+        <p class="registration-prize" id="event-prize" hidden></p>
+        <p class="registration-state" id="registration-state" role="status" hidden></p>
+        <div id="registration-form-mount"></div>
+        <section class="qr-missing-list" id="qr-missing-list" hidden aria-labelledby="qr-missing-title">
+          <h2 id="qr-missing-title">PAYMENT QR ASSETS TO ADD</h2>
+          <p>Payment QR images have not been supplied yet. Add the department primary and backup files listed below to the QR configuration.</p>
+          <ul id="qr-missing-items"></ul>
+        </section>
+        <section class="registration-success" id="registration-success" hidden tabindex="-1" aria-live="polite">
+          <span aria-hidden="true">✓</span>
+          <h2 id="success-title">Registration submitted</h2>
+          <p id="success-copy"></p>
+          <a class="registration-button" href="/events.html">BACK TO EVENTS</a>
+        </section>
+      </div>
+      <div class="registration-error" id="registration-error" role="alert" hidden></div>
+    </section>
+  </main>
+  <script defer src="/src/nebula-engine.js"></script>
+  <script defer src="/src/register.js"></script>
+  <script defer src="/src/site-footer.js"></script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+.soccer-section {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(350px, .76fr) minmax(0, 1.24fr);
+  align-items: center;
+  min-height: 100svh;
+  overflow: hidden;
+  isolation: isolate;
+  color: #f7f5fc;
+  font-family: var(--font-body);
+  background: transparent;
+}
+
+.soccer-copy {
+  position: relative;
+  z-index: 2;
+  grid-column: 1;
+  justify-self: start;
+  width: max-content;
+  max-width: 100%;
+  margin-left: clamp(32px, 6vw, 110px);
+  opacity: 0;
+  transform: translate3d(-16px, 0, 0);
+  text-shadow: 0 0 18px rgba(0, 0, 0, .9);
+}
+
+.soccer-kicker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 13px;
+  margin: 0 0 20px;
+  padding: 8px 24px;
+  color: #ece6f5;
+  font-size: clamp(10px, 1vw, 16px);
+  letter-spacing: .19em;
+  white-space: nowrap;
+}
+
+.soccer-kicker::before,
+.soccer-kicker::after {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  border: solid #ce37ff;
+  content: '';
+}
+
+.soccer-kicker::before { top: 0; left: 0; border-width: 1px 0 0 1px; }
+.soccer-kicker::after { right: 0; bottom: 0; border-width: 0 1px 1px 0; }
+.soccer-kicker span { color: #f2eef9; }
+.soccer-kicker b { color: #c843ff; font-weight: 400; }
+
+.soccer-copy h2 {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  font: 700 clamp(3.5rem, 6vw, 6.5rem)/.91 var(--font-display);
+  letter-spacing: .018em;
+  text-shadow: 0 0 15px rgba(166, 107, 255, .34);
+}
+
+.soccer-copy h2 span {
+  color: #f5f2fb;
+  background: linear-gradient(180deg, #fff 10%, #d9d5e5 60%, #fff 100%);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.soccer-copy h2 strong { color: #a72eff; font-weight: 700; }
+.soccer-tagline { margin: 22px 0 0 3px; color: #e3deea; font-size: clamp(13px, 1.48vw, 22px); letter-spacing: .12em; white-space: nowrap; }
+
+.soccer-arena {
+  position: relative;
+  z-index: 1;
+  grid-column: 2;
+  justify-self: end;
+  width: min(68vw, 1120px);
+  height: min(91svh, 940px);
+  min-height: 560px;
+  margin-right: -1.5vw;
+}
+
+.soccer-robot,
+.soccer-ball {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  transform: translate3d(-50%, -50%, 0);
+  will-change: transform, opacity;
+}
+
+.soccer-robot {
+  z-index: 2;
+  width: clamp(76px, 8.1vw, 142px);
+  aspect-ratio: 1;
+  opacity: 0;
+}
+
+.soccer-robot img,
+.soccer-ball img { display: block; width: 100%; height: 100%; object-fit: contain; user-select: none; }
+
+.soccer-robot--blue img { filter: drop-shadow(0 0 9px rgba(20, 112, 255, .82)); }
+.soccer-robot--magenta img { filter: hue-rotate(67deg) saturate(1.22) drop-shadow(0 0 9px rgba(211, 40, 255, .9)); }
+
+.soccer-ball {
+  z-index: 3;
+  width: clamp(50px, 5.2vw, 88px);
+  aspect-ratio: 1;
+  opacity: 0;
+}
+
+.soccer-section.nebula-ready .soccer-copy { opacity: 1; transform: translate3d(0, 0, 0); transition: opacity .65s ease .38s, transform .65s cubic-bezier(.2,.7,.2,1) .38s; }
+.soccer-section.match-active .soccer-copy { opacity: 1; transform: translate3d(0, 0, 0); }
+
+@media (max-width: 900px) {
+  .soccer-section {
+    display: flex;
+    min-height: auto;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 12svh 0 5svh;
+  }
+
+  .soccer-copy {
+    z-index: 2;
+    width: min(94vw, 660px);
+    margin: 0 auto;
+    text-align: center;
+    transform: translate3d(0, 14px, 0);
+  }
+
+  .soccer-kicker { margin-bottom: 18px; font-size: clamp(10px, 2.7vw, 15px); letter-spacing: .15em; }
+  .soccer-copy h2 { align-items: center; font-size: clamp(3.4rem, 12.8vw, 6.8rem); line-height: .96; }
+  .soccer-tagline { margin: 20px 0 0; font-size: clamp(13px, 3.3vw, 21px); letter-spacing: .1em; }
+
+  .soccer-arena {
+    flex: none;
+    align-self: center;
+    width: min(96vw, 760px);
+    height: min(68svh, 680px);
+    min-height: 420px;
+    margin: 3svh 0 0;
+  }
+
+  .soccer-robot { width: clamp(68px, 15vw, 118px); }
+  .soccer-ball { width: clamp(46px, 10vw, 76px); }
+}
+
+@media (max-width: 390px) {
+  .soccer-section { min-height: auto; padding-top: 11svh; }
+  .soccer-kicker { gap: 8px; padding-inline: 17px; font-size: 10px; }
+  .soccer-copy h2 { font-size: clamp(3rem, 12.4vw, 3.5rem); }
+  .soccer-arena { width: 100vw; height: min(65svh, 560px); min-height: 390px; margin-top: 2svh; }
+  .soccer-robot { width: clamp(62px, 17vw, 78px); }
+  .soccer-ball { width: clamp(40px, 10.8vw, 48px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .soccer-copy,
+  .soccer-robot,
+  .soccer-ball { transition: none !important; animation: none !important; }
+  .soccer-copy { opacity: 1; transform: none; }
+  .soccer-robot { opacity: 1; }
+  .soccer-ball { opacity: 1; }
+}

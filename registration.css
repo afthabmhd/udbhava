@@ -1,0 +1,51 @@
+.register-body{min-width:320px;overflow-x:hidden}
+.registration-hero{width:min(100% - 36px,1100px);margin:0 auto;padding:clamp(118px,16vh,190px) 0 32px;border-bottom:1px solid rgba(169,148,199,.2)}
+.registration-eyebrow,.registration-kicker{display:block;color:#c9b3e8;font-size:12px;letter-spacing:.2em}
+.registration-hero h1,.registration-not-found h1{margin:13px 0;color:#f5f0ff;font:700 clamp(2.4rem,7vw,5.8rem)/1.12 var(--font-display);text-shadow:0 0 24px rgba(194,156,255,.28)}
+.registration-hero>p{max-width:650px;margin:0;color:#c2b6d3;font-size:15px;line-height:1.7}
+.registration-shell{width:min(100% - 36px,1100px);min-height:45vh;margin:0 auto;padding:32px 0 72px}
+.registration-loading,.registration-error{padding:22px;border:1px solid rgba(169,136,217,.4);border-radius:8px;color:#ded2ed;background:rgba(6,5,12,.88);font-size:15px;line-height:1.6}
+.registration-error{border-color:rgba(238,129,160,.6);color:#ffe1ea}
+.registration-event-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding:22px 0 24px;border-bottom:1px solid rgba(169,148,199,.22)}
+.registration-kicker{margin:0 0 10px}
+.registration-event-heading h2{margin:0;color:#f5f0ff;font:700 clamp(1.8rem,4.3vw,3.3rem)/1.18 var(--font-display);overflow-wrap:anywhere}
+.registration-fee{flex:0 0 auto;color:#f4eaff;font:600 clamp(1.1rem,2.4vw,1.6rem)/1.35 var(--font-body);text-align:right}
+.registration-fee small{display:block;margin-top:5px;color:#b8a8ca;font:400 12px/1.5 var(--font-body);letter-spacing:.06em}
+.registration-prize{margin:14px 0 0;color:#dfc8ff;font-size:14px;font-weight:600;letter-spacing:.05em}
+.registration-state{margin:24px 0;padding:17px 20px;border:1px solid rgba(196,157,230,.52);border-left:3px solid #bd79ff;border-radius:6px;color:#f4eaff;background:linear-gradient(100deg,rgba(83,39,122,.25),rgba(7,6,13,.75));font-size:15px;line-height:1.55}
+.registration-form{max-width:760px;margin:26px auto 0;padding:clamp(20px,4vw,38px);border:1px solid rgba(169,148,199,.36);border-radius:9px;background:linear-gradient(145deg,rgba(11,9,18,.94),rgba(5,4,9,.97));box-shadow:0 18px 70px rgba(0,0,0,.25)}
+.registration-form h3{margin:0 0 22px;color:#f3eaff;font:600 16px/1.4 var(--font-body);letter-spacing:.12em}
+.registration-field{display:grid;gap:8px;margin-bottom:19px}
+.registration-field label{color:#ddd2eb;font-size:14px;font-weight:600;letter-spacing:.025em}
+.registration-field input{width:100%;min-height:49px;padding:11px 13px;border:1px solid rgba(176,158,199,.4);border-radius:5px;outline:none;color:#f4effa;background:rgba(4,4,9,.9);font:400 16px/1.4 var(--font-body)}
+.registration-field input:focus{border-color:#c79aff;box-shadow:0 0 0 3px rgba(166,107,255,.15)}
+.registration-field input[aria-invalid=true]{border-color:#ff8aa8;box-shadow:0 0 0 2px rgba(255,99,141,.12)}
+.field-hint,.field-error{margin:0;color:#aa9cb9;font-size:12px;line-height:1.5}
+.field-error{color:#ffb1c4}
+.field-error:empty{display:none}
+.honeypot{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important}
+.payment-section{margin:26px 0;padding:20px;border:1px solid rgba(173,129,218,.36);border-radius:7px;background:rgba(21,13,32,.54)}
+.payment-amount{margin:0 0 18px;color:#fff;font:700 clamp(1.4rem,4vw,2rem)/1.4 var(--font-body);text-align:center}
+.payment-qr-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.payment-qr{display:grid;align-content:start;justify-items:center;gap:10px;min-width:0;margin:0;padding:14px;border:1px solid rgba(180,153,207,.28);border-radius:6px;background:rgba(4,3,9,.65);text-align:center}
+.payment-qr figcaption{min-height:38px;color:#e6dcf1;font-size:13px;line-height:1.45}
+.payment-qr img{width:min(100%,220px);aspect-ratio:1;object-fit:contain;border-radius:4px;background:#fff}
+.payment-qr__placeholder{display:grid;width:min(100%,220px);aspect-ratio:1;place-items:center;padding:16px;border:1px dashed rgba(194,150,241,.52);border-radius:4px;color:#b9a7cb;background:repeating-linear-gradient(135deg,rgba(132,76,177,.08) 0 8px,transparent 8px 16px);font-size:12px;line-height:1.5}
+.upi-help{margin:-7px 0 19px;color:#b9a9ca;font-size:12px;line-height:1.55}
+.registration-button{display:inline-flex;min-height:50px;align-items:center;justify-content:center;padding:13px 24px;border:1px solid rgba(204,151,255,.75);border-radius:5px;color:#fff;background:linear-gradient(105deg,rgba(123,54,190,.72),rgba(65,32,99,.8));font:600 13px/1.35 var(--font-body);letter-spacing:.1em;text-align:center;text-decoration:none;cursor:pointer;transition:background .2s,border-color .2s,transform .2s}
+.registration-button:hover,.registration-button:focus-visible{border-color:#e2c5ff;outline:2px solid rgba(190,145,255,.3);outline-offset:2px;background:linear-gradient(105deg,rgba(147,72,216,.8),rgba(83,45,124,.9));transform:translateY(-1px)}
+.registration-button:disabled{opacity:.65;cursor:wait;transform:none}
+.registration-submit-row{display:flex;align-items:center;gap:16px;margin-top:24px}
+.registration-submit-row p{margin:0;color:#b9a9ca;font-size:12px;line-height:1.5}
+.registration-success{max-width:760px;margin:30px auto;padding:clamp(24px,5vw,44px);border:1px solid rgba(181,129,231,.55);border-radius:8px;background:linear-gradient(145deg,rgba(35,17,53,.82),rgba(5,4,9,.96));text-align:center}
+.registration-success>span{display:grid;width:48px;height:48px;place-items:center;margin:0 auto 15px;border:1px solid #bb83ef;border-radius:50%;color:#e3c8ff;font-size:25px}
+.registration-success h2{margin:0 0 12px;color:#f5efff;font:700 clamp(1.4rem,4vw,2.3rem)/1.35 var(--font-display)}
+.registration-success p,.registration-not-found>p{margin:0 0 22px;color:#d0c4df;font-size:15px;line-height:1.65}
+.qr-missing-list{max-width:760px;margin:30px auto 0;padding:20px 22px;border:1px dashed rgba(169,148,199,.34);border-radius:7px;color:#b9a9ca;background:rgba(5,4,10,.65)}
+.qr-missing-list h2{margin:0 0 10px;color:#ddd0ed;font:600 12px/1.5 var(--font-body);letter-spacing:.13em}
+.qr-missing-list p,.qr-missing-list li{font-size:12px;line-height:1.6}
+.qr-missing-list ul{columns:2;margin:12px 0 0;padding-left:19px}
+.registration-not-found{padding-top:20vh;text-align:center}
+.registration-not-found .registration-button{margin-top:6px}
+@media(max-width:640px){.registration-hero{padding-top:128px}.registration-event-heading{align-items:flex-start;flex-direction:column;gap:15px}.registration-fee{text-align:left}.registration-shell{padding-top:20px}.payment-section{padding:14px}.payment-qr-grid{grid-template-columns:1fr}.payment-qr{grid-template-columns:90px minmax(0,1fr);align-items:center;text-align:left}.payment-qr figcaption{min-height:0;grid-column:1/-1}.payment-qr img,.payment-qr__placeholder{width:90px}.registration-submit-row{align-items:stretch;flex-direction:column}.registration-submit-row .registration-button{width:100%}.qr-missing-list ul{columns:1}}
+@media(prefers-reduced-motion:reduce){.registration-button{transition:none}}

@@ -1,0 +1,169 @@
+/* Robot race section. The page-wide glyph renderer supplies its track and tendrils. */
+.robot-section {
+  --robot-violet: #ae43ff;
+  position: relative;
+  z-index: 1;
+  min-height: 100svh;
+  overflow: hidden;
+  isolation: isolate;
+  color: #f7f5fc;
+  background: transparent;
+  font-family: var(--font-body);
+}
+
+.robot-content {
+  position: relative;
+  z-index: 1;
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(350px, .94fr) minmax(0, 1fr);
+  align-items: center;
+  padding: 8vh 5.5vw;
+}
+
+.robot-content h2,
+.robot-finish {
+  z-index: 2;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .04em;
+  font-family: var(--font-display);
+  font-size: clamp(3.1rem, 4.8vw, 5.8rem);
+  line-height: .99;
+  letter-spacing: .025em;
+  opacity: 0;
+  transition: opacity 380ms ease, transform 380ms cubic-bezier(.2,.7,.2,1);
+}
+
+.robot-content h2 { grid-column: 1; justify-self: end; text-align: right; transform: translateX(-16px); }
+.robot-content h2 span,.robot-finish span { color: #f8f7fb; }
+.robot-content h2 strong,.robot-finish strong { color: var(--robot-violet); font-weight: 700; }
+.robot-finish { grid-column: 3; justify-self: start; transform: translateX(16px); }
+
+.robot-stage {
+  position: relative;
+  z-index: 1;
+  grid-column: 2;
+  justify-self: center;
+  width: min(44vw, 650px);
+  height: min(78vh, 740px);
+  margin: 0;
+  display: grid;
+  place-items: center;
+}
+
+.robot-vehicle {
+  display: block;
+  width: min(16vw, 235px);
+  height: auto;
+  filter: drop-shadow(0 0 18px rgba(29,99,255,.16));
+  opacity: 1;
+  visibility: hidden;
+  transform: translate3d(0, 105svh, 0);
+  transform-origin: center;
+  transition: none;
+}
+
+.robot-stage figcaption {
+  position: absolute;
+  right: 1%;
+  bottom: 5%;
+  color: #a9a4b4;
+  font-size: clamp(7px,.58vw,9px);
+  letter-spacing: .16em;
+  opacity: 0;
+  transition: opacity 340ms ease;
+}
+
+.robot-stage figcaption span { display: block; margin-top: 5px; color: #777283; }
+.robot-stage-cross { position: absolute; color: #d968ff; font-size: 18px; opacity: 0; transition: opacity 340ms ease; }
+.robot-stage-cross--left { top: 16%; left: 2%; }
+.robot-stage-cross--right { right: 3%; bottom: 18%; }
+
+.robot-coordinates {
+  position: absolute;
+  right: 5.5vw;
+  bottom: 8%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: #898394;
+  font-size: 8px;
+  letter-spacing: .2em;
+  opacity: 0;
+  transition: opacity 340ms ease;
+}
+
+.robot-coordinates i { width: 18px; height: 1px; background: var(--robot-violet); }
+
+.robot-section.track-complete .robot-vehicle {
+  visibility: visible;
+}
+
+.robot-section.robot-running .robot-vehicle {
+  transform: translate3d(0,0,0);
+  transition: transform 1.35s linear;
+}
+
+.robot-section.text-ready .robot-content h2,
+.robot-section.text-ready .robot-finish,
+.robot-section.text-ready .robot-stage figcaption,
+.robot-section.text-ready .robot-stage-cross,
+.robot-section.text-ready .robot-coordinates {
+  opacity: 1;
+  transform: translate(0,0);
+}
+
+@media (min-width: 901px) and (max-width: 1200px) {
+  .robot-content h2,.robot-finish { font-size: clamp(2.9rem, 4.3vw, 4.4rem); }
+}
+
+@media (max-width: 900px) {
+  .robot-section { min-height: auto; }
+  .robot-content {
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 12svh 5vw 8svh;
+  }
+  .robot-content h2,.robot-finish {
+    flex: none;
+    align-items: center;
+    justify-self: auto;
+    text-align: center;
+    font-size: clamp(3rem, 12vw, 4.6rem);
+    line-height: 1.02;
+    letter-spacing: .015em;
+  }
+  .robot-content h2 { margin-top: 0; transform: translateY(12px); }
+  .robot-stage {
+    flex: none;
+    width: min(90vw, 600px);
+    height: clamp(280px, 70vw, 440px);
+    margin: clamp(2px, 1vw, 8px) 0 0;
+  }
+  .robot-vehicle { width: min(29vw, 190px); }
+  .robot-finish { margin-top: clamp(0px, 2vw, 14px); transform: translateY(12px); }
+  .robot-stage figcaption { right: 1%; bottom: 2%; font-size: 7px; }
+  .robot-coordinates { right: 6vw; bottom: 7%; font-size: 7px; }
+}
+
+@media (max-width: 380px) {
+  .robot-section,.robot-content { min-height: auto; }
+  .robot-content { padding-right: 4vw; padding-left: 4vw; }
+  .robot-content h2,.robot-finish { font-size: clamp(2.65rem, 11.6vw, 3.15rem); }
+  .robot-stage { height: 320px; }
+  .robot-vehicle { width: 29vw; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .robot-content h2,.robot-finish,.robot-stage figcaption,
+  .robot-stage-cross,.robot-coordinates,.robot-vehicle { transition: none !important; }
+  .robot-vehicle { visibility: visible; opacity: 1; transform: translate3d(0,0,0); }
+  .robot-content h2,.robot-finish,.robot-stage figcaption,
+  .robot-stage-cross,.robot-coordinates { opacity: 1; }
+}

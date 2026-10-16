@@ -1,0 +1,232 @@
+.paattoholic-section {
+  position: relative;
+  z-index: 1;
+  min-height: 100svh;
+  overflow: hidden;
+  color: #f7f4ff;
+  font-family: var(--font-body);
+  background: transparent;
+}
+
+.paattoholic-performer-window {
+  position: absolute;
+  z-index: 1;
+  inset: 0 0 auto;
+  height: 100svh;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.paattoholic-performer-window::after {
+  position: absolute;
+  inset: -1px;
+  z-index: 1;
+  content: '';
+  background: radial-gradient(ellipse at 50% 44%, transparent 48%, rgba(0, 0, 0, .28) 76%, #000 100%), linear-gradient(to bottom, transparent 90%, rgba(0, 0, 0, .18) 97%, #000 100%);
+  pointer-events: none;
+}
+
+.paattoholic-performer {
+  position: absolute;
+  --hand-x: 8.7%;
+  --hand-y: 44%;
+  top: 0;
+  left: 50%;
+  display: block;
+  height: 150svh;
+  width: auto;
+  max-width: none;
+  object-fit: contain;
+  object-position: center top;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 61%, transparent 68%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 61%, transparent 68%);
+  opacity: 0;
+  transform: translate3d(-50%, 0, 0);
+  transform-origin: center top;
+  mix-blend-mode: screen;
+  transition: none;
+  user-select: none;
+}
+
+.paattoholic-reveal {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 50%;
+  width: auto;
+  height: 150svh;
+  object-fit: contain;
+  object-position: center top;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 61%, transparent 68%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 61%, transparent 68%);
+  opacity: 0;
+  transform: translateX(-50%);
+  mix-blend-mode: screen;
+  transition: none;
+  pointer-events: none;
+}
+
+.paattoholic-section.is-materializing .paattoholic-reveal { opacity: 1; }
+.paattoholic-section.is-materializing .paattoholic-performer { opacity: 0; }
+.paattoholic-section.is-materialized .paattoholic-reveal { opacity: 0; }
+.paattoholic-section.is-materialized .paattoholic-performer { opacity: 1; }
+
+.paattoholic-title-group {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: clamp(36px, 6.5svh, 82px);
+  left: 0;
+  display: flex;
+  isolation: isolate;
+  flex-direction: column;
+  align-items: center;
+  padding-inline: 3vw;
+  text-align: center;
+}
+
+.paattoholic-title-group::before {
+  position: absolute;
+  z-index: -1;
+  inset: -34px -8vw;
+  content: '';
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, .88) 0%, rgba(0, 0, 0, .66) 46%, rgba(0, 0, 0, .24) 72%, transparent 100%);
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.paattoholic-title-frame {
+  display: grid;
+  place-items: center;
+  width: min(76vw, 1320px);
+  max-width: 100%;
+  box-sizing: border-box;
+  min-height: clamp(112px, 25svh, 250px);
+  padding: .08em .15em .13em;
+  border: 1px solid rgba(217, 160, 255, .84);
+  background: rgba(0, 0, 0, .36);
+  box-shadow: inset 0 0 22px rgba(114, 40, 255, .08), 0 0 20px rgba(171, 41, 255, .16);
+  opacity: 1;
+  clip-path: inset(0 100% 0 0);
+  filter: blur(7px) brightness(1.8);
+  transform: translate3d(-2%, 0, 0) skewX(-3deg) scaleX(.96);
+  transform-origin: left center;
+  transition: clip-path .92s cubic-bezier(.18,.78,.2,1) .62s, filter .72s ease .62s, transform .92s cubic-bezier(.18,.78,.2,1) .62s;
+}
+
+.paattoholic-title-frame h2 {
+  max-width: 100%;
+  font-size: clamp(26px, 10vw, 170px);
+  margin: 0;
+  color: #f9f5ff;
+  background: linear-gradient(90deg, #fff 2%, #e6d7ff 29%, #d94aff 62%, #f9e7ff 100%);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: .98;
+  letter-spacing: -.035em;
+  white-space: nowrap;
+  text-shadow: 0 0 20px rgba(176, 61, 255, .28);
+}
+
+.paattoholic-subtitle {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2.4vw, 34px);
+  width: min(74vw, 1200px);
+  max-width: 100%;
+  margin: clamp(13px, 2.1svh, 23px) 0 0;
+  color: #f4eaff;
+  font-size: clamp(11px, 1.45vw, 22px);
+  letter-spacing: .34em;
+  line-height: 1.4;
+  white-space: normal;
+  text-wrap: balance;
+  opacity: 1;
+  clip-path: inset(0 50% 0 50%);
+  filter: blur(5px);
+  transform: scaleX(.86);
+  transform-origin: center;
+  transition: clip-path .7s cubic-bezier(.2,.76,.2,1) .84s, filter .55s ease .84s, transform .7s cubic-bezier(.2,.76,.2,1) .84s;
+}
+
+.paattoholic-subtitle::before,
+.paattoholic-subtitle::after {
+  flex: 1 1 auto;
+  height: 1px;
+  content: '';
+}
+
+.paattoholic-subtitle::before { background: linear-gradient(90deg, transparent, rgba(216, 67, 255, .95)); }
+.paattoholic-subtitle::after { background: linear-gradient(90deg, rgba(216, 67, 255, .95), transparent); }
+
+.paattoholic-section.is-revealed .paattoholic-title-frame,
+.paattoholic-section.is-revealed .paattoholic-subtitle {
+  opacity: 1;
+  clip-path: inset(0);
+  filter: blur(0);
+  transform: translate3d(0, 0, 0) skewX(0) scaleX(1);
+}
+
+@media (max-width: 700px) {
+  .paattoholic-section { min-height: auto; display: flex; flex-direction: column; padding-bottom: 7svh; }
+  .paattoholic-performer-window { height: 100vw; }
+  .paattoholic-performer {
+    left: 50%;
+    width: 100vw;
+    height: auto;
+    transform: translateX(-50%);
+    object-fit: contain;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 70%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 70%);
+    --hand-y: 44%;
+  }
+  .paattoholic-reveal {
+    left: 50%; width: 100vw; height: auto; transform: translateX(-50%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 70%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 70%);
+  }
+  .paattoholic-title-group {
+    position: relative;
+    inset: auto;
+    margin-top: 100vw;
+    padding-inline: 3vw;
+  }
+  .paattoholic-title-frame {
+    width: 94vw;
+    min-height: clamp(88px, 14svh, 132px);
+    padding-inline: 4px;
+  }
+  .paattoholic-title-frame h2 {
+    font-size: clamp(26px, 10vw, 68px);
+    letter-spacing: -.025em;
+  }
+  .paattoholic-subtitle {
+    gap: 9px;
+    width: 94vw;
+    margin-top: 13px;
+    font-size: clamp(8px, 2.25vw, 11px);
+    letter-spacing: .22em;
+  }
+}
+
+@media (max-width: 360px) {
+  .paattoholic-title-frame h2 { font-size: clamp(24px, 9.6vw, 35px); }
+  .paattoholic-subtitle { font-size: 7.5px; letter-spacing: .18em; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paattoholic-performer,
+  .paattoholic-reveal,
+  .paattoholic-title-frame,
+  .paattoholic-subtitle {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .paattoholic-performer { transform: translateX(-50%); }
+  .paattoholic-reveal { display: none; }
+  .paattoholic-title-frame,
+  .paattoholic-subtitle { clip-path: none; filter: none; }
+}

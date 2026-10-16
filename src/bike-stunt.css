@@ -1,0 +1,187 @@
+.bike-stunt-section {
+  position: relative;
+  z-index: 1;
+  min-height: 100svh;
+  overflow: hidden;
+  isolation: isolate;
+  color: #f7f5fc;
+  font-family: var(--font-body);
+  background: transparent;
+}
+
+.bike-stunt-section::after {
+  position: absolute;
+  z-index: 1;
+  inset: auto 0 0;
+  height: clamp(260px, 40svh, 500px);
+  content: '';
+  background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, .22) 28%, rgba(0, 0, 0, .68) 72%, #000 100%);
+  pointer-events: none;
+}
+
+.bike-stunt-copy {
+  position: absolute;
+  z-index: 4;
+  left: 6%;
+  top: 33%;
+  width: min(43vw, 700px);
+  isolation: isolate;
+  opacity: 0;
+  transform: translateY(18px);
+  text-shadow: 0 0 18px rgba(0, 0, 0, .9);
+}
+
+.bike-stunt-copy::before {
+  position: absolute;
+  z-index: -1;
+  inset: -2.5rem -3.5rem;
+  content: '';
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, .78) 0%, rgba(0, 0, 0, .58) 48%, rgba(0, 0, 0, .2) 72%, transparent 100%);
+  filter: blur(12px);
+  pointer-events: none;
+}
+
+.bike-stunt-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 22px;
+  padding: 8px 24px;
+  position: relative;
+  color: #e8e1f2;
+  font-size: clamp(10px, 1vw, 16px);
+  letter-spacing: .24em;
+  white-space: nowrap;
+}
+
+.bike-stunt-kicker::before,
+.bike-stunt-kicker::after {
+  content: '';
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  border-color: #c62fff;
+  border-style: solid;
+}
+
+.bike-stunt-kicker::before { left: 0; top: 0; border-width: 1px 0 0 1px; }
+.bike-stunt-kicker::after { right: 0; bottom: 0; border-width: 0 1px 1px 0; }
+.bike-stunt-kicker b { color: #b33aff; font-weight: 400; }
+
+.bike-stunt-copy h2 {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  font: 700 clamp(3rem, 5.7vw, 6rem)/.91 var(--font-display);
+  letter-spacing: .012em;
+  text-shadow: 0 0 14px rgba(171, 114, 255, .35);
+}
+
+.bike-stunt-copy h2 span {
+  color: #f7f4ff;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, .62);
+}
+
+.bike-stunt-copy h2 strong { color: #a92cff; font-weight: 700; }
+.bike-stunt-tagline { margin: 24px 0 0 3px; color: #e2dce9; font-size: clamp(14px, 1.55vw, 24px); letter-spacing: .13em; }
+
+.bike-stunt-ramp-crowd {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  bottom: 0;
+  display: block;
+  width: 100%;
+  height: 66%;
+  object-fit: cover;
+  object-position: center bottom;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 88%, rgba(0, 0, 0, .82) 95%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 88%, rgba(0, 0, 0, .82) 95%, transparent 100%);
+  opacity: 0;
+  transform: translate(-50%, 5%);
+  filter: brightness(1.15) saturate(1.08);
+  transition: opacity .75s ease, transform .75s cubic-bezier(.2, .7, .2, 1);
+  pointer-events: none;
+}
+
+.bike-stunt-rider {
+  position: absolute;
+  z-index: 2;
+  left: 49%;
+  top: 29%;
+  display: block;
+  width: min(30vw, 650px);
+  height: auto;
+  object-fit: contain;
+  opacity: 0;
+  visibility: hidden;
+  --bike-start-x: -20vw;
+  --bike-start-y: 34vh;
+  --bike-end-x: 0px;
+  transform: translate3d(var(--bike-end-x), 0, 0) rotate(-8deg);
+  transform-origin: 55% 55%;
+  will-change: transform, opacity;
+  filter: brightness(1.65) drop-shadow(0 0 20px rgba(129, 48, 255, .48));
+  pointer-events: none;
+}
+
+.bike-stunt-section.scene-ready .bike-stunt-ramp-crowd {
+  opacity: .94;
+  transform: translate(-50%, 0);
+}
+
+.bike-stunt-section.jump-ready .bike-stunt-rider {
+  visibility: visible;
+  animation: bike-stunt-jump .54s linear both;
+}
+
+.bike-stunt-section.text-ready .bike-stunt-copy {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity .65s ease, transform .65s cubic-bezier(.2, .7, .2, 1);
+}
+
+@keyframes bike-stunt-jump {
+  0% { opacity: 0; transform: translate3d(var(--bike-start-x), var(--bike-start-y), 0) rotate(-8deg); }
+  8% { opacity: 1; }
+  100% { opacity: 1; transform: translate3d(var(--bike-end-x), 0, 0) rotate(-8deg); }
+}
+
+@media (max-width: 900px) {
+  .bike-stunt-section { min-height: 130svh; }
+  .bike-stunt-copy {
+    left: 4%;
+    top: 30svh;
+    width: 92%;
+    text-align: center;
+  }
+  .bike-stunt-copy::before {
+    inset: -2rem -1.5rem;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, .84) 0%, rgba(0, 0, 0, .64) 52%, rgba(0, 0, 0, .22) 75%, transparent 100%);
+  }
+  .bike-stunt-kicker { margin-bottom: 18px; font-size: clamp(10px, 3vw, 13px); }
+  .bike-stunt-copy h2 { align-items: center; font-size: clamp(2.7rem, 10.6vw, 5.7rem); line-height: .98; }
+  .bike-stunt-tagline { margin-top: 20px; font-size: clamp(13px, 3.6vw, 19px); letter-spacing: .1em; }
+  .bike-stunt-ramp-crowd { width: min(230vw, 1100px); height: 60svh; max-height: none; filter: brightness(1.15) saturate(1.08); }
+  .bike-stunt-rider {
+    left: 50%;
+    top: 79svh;
+    width: min(74vw, 760px);
+    --bike-start-x: calc(-50% - 14vw);
+    --bike-start-y: 35svh;
+    --bike-end-x: -50%;
+  }
+}
+
+@media (max-width: 380px) {
+  .bike-stunt-copy h2 { font-size: clamp(2.45rem, 10vw, 2.8rem); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bike-stunt-copy,
+  .bike-stunt-ramp-crowd,
+  .bike-stunt-rider { transition: none; animation: none !important; }
+  .bike-stunt-copy { opacity: 1; transform: none; }
+  .bike-stunt-ramp-crowd { opacity: .94; transform: translateX(-50%); }
+  .bike-stunt-rider { opacity: 1; visibility: visible; transform: translate3d(var(--bike-end-x), 0, 0) rotate(-8deg); }
+}

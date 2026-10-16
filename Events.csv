@@ -1,0 +1,64 @@
+slug,department_id,guide_ref,name,display_group,registration_mode,fee_basis,fee_basis_confirmed,price_inr,prize_pool,capacity,capacity_unit,team_min,team_max,event_dates,date_status,group_slug,is_open
+cse-offscript,cse,CSE-1,OffScript,Competitions,paid_online,per_person,TRUE,70,7000,50,participants,,,,tbd,,FALSE
+cse-reveriq,cse,CSE-2,ReverIQ,Competitions,paid_online,per_team,TRUE,150,15000,25,teams,2,2,,tbd,,FALSE
+cse-expert-webinar,cse,CSE-3,Expert Webinar,Workshops and Talks,paid_online,per_person,FALSE,75,7500,,,,,,tbd,,FALSE
+cse-web-weaver,cse,CSE-4,Web Weaver,Competitions,paid_online,per_person,FALSE,100,10000,40,participants,,,10/28/26,confirmed,,FALSE
+cse-technical-workshop,cse,CSE-5,Technical Workshop,Workshops and Talks,paid_online,per_person,TRUE,250,25000,,,,,,tbd,,FALSE
+cse-quizbuzz,cse,CSE-6,QuizBuzz,Competitions,paid_online,per_team,TRUE,100,10000,36,teams,2,2,,tbd,,FALSE
+cse-bug-hunt,cse,CSE-7,Bug Hunt,Competitions,paid_online,per_team,TRUE,200,20000,,,2,2,,tbd,,FALSE
+cse-el-debato,cse,CSE-8,El Debato,Competitions,paid_online,per_team,TRUE,400,40000,,,4,4,,tbd,,FALSE
+cse-project-exit,cse,CSE-9,Project: Exit,Competitions,paid_online,per_team,TRUE,500,50000,,,4,4,,tbd,,FALSE
+cse-derby-of-doom,cse,CSE-10a,Derby of Doom,Games and Fun,paid_online,per_person,TRUE,70,7000,,,,,,tbd,cse-arcade-armageddon,FALSE
+cse-the-great-flag-heist,cse,CSE-10b,The Great Flag Heist,Games and Fun,paid_online,per_team,TRUE,200,20000,,,4,4,,tbd,cse-arcade-armageddon,FALSE
+cse-dash-for-gold,cse,CSE-10c,Dash for Gold,Games and Fun,paid_online,per_person,TRUE,70,7000,,,,,,tbd,cse-arcade-armageddon,FALSE
+cse-jungle-rampage,cse,CSE-10d,Jungle Rampage,Games and Fun,paid_online,per_person,TRUE,70,7000,,,,,,tbd,cse-arcade-armageddon,FALSE
+cse-cold-case,cse,CSE-11,Cold Case,Competitions,paid_online,per_team,TRUE,500,50000,,,,5,,tbd,,FALSE
+cse-festival-of-fury,cse,CSE-12,Festival of Fury,Games and Fun,on_spot,spot,TRUE,,,,,,,,tbd,,FALSE
+cse-hackathon,cse,CSE-13,Hackathon,Competitions,paid_online,per_team,FALSE,300,30000,,,2,5,,tbd,,FALSE
+ads-robo-soccer,ads,ADS-1,Robo Soccer,Competitions,paid_online,per_team,FALSE,399,39900,,,2,4,,tbd,,FALSE
+ads-vibe-code-challenge,ads,ADS-2,Vibe Code Challenge,Competitions,paid_online,unconfirmed,FALSE,50,5000,,,1,2,,tbd,,FALSE
+ads-data-detective,ads,ADS-3,Data Detective,Competitions,paid_online,per_person,TRUE,50,5000,,,,,,tbd,,FALSE
+ads-prompt-design,ads,ADS-4,Prompt Design,Competitions,paid_online,per_person,TRUE,50,5000,,,,,,tbd,,FALSE
+ads-robotic-workshop,ads,ADS-5,Robotic Workshop,Workshops and Talks,paid_online,per_person,FALSE,399,39900,,,,,,tbd,,FALSE
+ads-ai-workshop,ads,ADS-6,AI Workshop,Workshops and Talks,paid_online,per_person,FALSE,299,29900,,,,,,tbd,,FALSE
+ads-robot-expo,ads,ADS-7,Robot Expo,Expos,on_spot,spot,TRUE,,,,,,,,tbd,,FALSE
+ads-iot-workshop,ads,ADS-8,IoT Workshop,Workshops and Talks,paid_online,per_person,FALSE,399,39900,,,,,,tbd,,FALSE
+mech-engine-overhauling,mech,MECH-1,Engine Overhauling,Workshops and Talks,paid_online,per_person,TRUE,300,30000,,,,,,tbd,,FALSE
+mech-ksrtc-expo-and-workshop,mech,MECH-2,KSRTC Expo and Workshop,Expos,paid_online,per_person,FALSE,100,10000,,,,,,tbd,,FALSE
+mech-bike-stunt,mech,MECH-3,Bike Stunt,Games and Fun,free_online,free,TRUE,0,0,,,,,,tbd,,FALSE
+mech-play-station,mech,MECH-4,Play Station,Games and Fun,paid_online,per_person,TRUE,100,10000,,,,,,tbd,,FALSE
+mech-technical-talk,mech,MECH-5,Technical Talk,Workshops and Talks,free_online,free,TRUE,0,0,,,,,,tbd,,FALSE
+civil-lost-blueprint,civil,CIVIL-1,Lost Blueprint,Competitions,paid_online,per_team,TRUE,500,5000,,,4,5,10/28/26,confirmed,,FALSE
+civil-last-exit,civil,CIVIL-2,Last Exit,Competitions,paid_online,per_team,TRUE,200,2000,,,4,5,28-10-26|29-10-26,confirmed,,FALSE
+civil-dirt-rush,civil,CIVIL-3,Dirt Rush,Competitions,paid_online,per_team,TRUE,150,1500,,,2,2,10/28/26,confirmed,,FALSE
+civil-brick-by-brick,civil,CIVIL-4,Brick by Brick,Competitions,paid_online,per_team,TRUE,150,1500,,,4,4,10/28/26,confirmed,,FALSE
+civil-clay-studio,civil,CIVIL-5,Clay Studio,Workshops and Talks,paid_online,per_person,TRUE,250,0,40,participants,,,10/29/26,confirmed,,FALSE
+civil-bim-workshop,civil,CIVIL-6,BIM Workshop,Workshops and Talks,paid_online,per_person,TRUE,200,0,,,,,10/28/26,confirmed,,FALSE
+civil-mindstorm,civil,CIVIL-7,Mindstorm,Competitions,paid_online,per_person,TRUE,50,1000,,,,,10/29/26,confirmed,,FALSE
+civil-word-wreck,civil,CIVIL-8,Word Wreck,Competitions,paid_online,per_person,TRUE,100,1500,,,,,10/29/26,confirmed,,FALSE
+civil-reel-deal,civil,CIVIL-9,Reel Deal,Competitions,paid_online,per_person,TRUE,50,1000,,,,,10/28/26,confirmed,,FALSE
+civil-photo-booth,civil,CIVIL-10,Photo Booth,Games and Fun,on_spot,flat,FALSE,200,0,,,,,28-10-26|29-10-26,confirmed,,FALSE
+civil-face-painting,civil,CIVIL-11,Face Painting,Games and Fun,on_spot,varies,TRUE,,0,,,,,28-10-26|29-10-26,confirmed,,FALSE
+civil-arm-wrestling,civil,CIVIL-12,Arm Wrestling,Games and Fun,on_spot,per_person,TRUE,30,0,,,,,28-10-26|29-10-26,confirmed,,FALSE
+eee-national-level-technical-quiz-competition,eee,EEE-1,National Level Technical Quiz Competition,Competitions,paid_online,per_team,FALSE,50,5000,,,2,2,,tbd,,FALSE
+eee-student-project-exhibition,eee,EEE-2,Student Project Exhibition,Expos,on_spot,spot,TRUE,,,,,,,,tbd,,FALSE
+eee-kseb-expo,eee,EEE-3,KSEB Expo,Expos,free_online,free,TRUE,0,0,,,,,,tbd,,FALSE
+eee-dark-zone,eee,EEE-4,Dark Zone,Games and Fun,paid_online,per_person,TRUE,50,5000,,,,,,tbd,,FALSE
+eee-catch-the-stick,eee,EEE-5,Catch the Stick,Games and Fun,paid_online,per_person,TRUE,50,5000,,,,,,tbd,,FALSE
+eee-car-race,eee,EEE-6,Car Race,Games and Fun,paid_online,per_person,TRUE,50,5000,,,,,,tbd,,FALSE
+eee-design-the-circuit,eee,EEE-7,Design the Circuit,Competitions,paid_online,per_person,TRUE,50,5000,,,,,,tbd,,FALSE
+eee-whats-inside-the-box,eee,EEE-8,What's Inside the Box,Games and Fun,paid_online,per_person,TRUE,50,5000,,,,,,tbd,,FALSE
+eee-car-assembly-and-play,eee,EEE-9,Car Assembly and Play,Competitions,paid_online,per_person,TRUE,50,5000,,,,,,tbd,,FALSE
+eee-lazer-maze,eee,EEE-10,Lazer Maze,Games and Fun,paid_online,per_person,TRUE,50,5000,,,,,,tbd,,FALSE
+eee-workshop-industrial-automation,eee,EEE-11,Workshop – Industrial Automation,Workshops and Talks,paid_online,per_person,TRUE,50,5000,,,,,,tbd,,FALSE
+eee-shock-zone,eee,EEE-12,Shock Zone,Games and Fun,free_online,free,TRUE,0,0,,,,,,tbd,,FALSE
+ece-treasure-hunt,ece,ECE-1,Treasure Hunt,Competitions,paid_online,per_team,FALSE,200,20000,,,,,10/28/26,confirmed,,FALSE
+ece-build-win,ece,ECE-2,Build & Win,Competitions,paid_online,per_team,FALSE,400,40000,,,,,10/29/26,confirmed,,FALSE
+ece-circuitrix,ece,ECE-3,Circuitrix,Competitions,paid_online,per_team,FALSE,100,10000,,,2,2,10/28/26,confirmed,,FALSE
+ece-apex-rampage,ece,ECE-4,Apex Rampage,Competitions,paid_online,per_person,FALSE,50,5000,,,,,10/29/26,confirmed,,FALSE
+ece-solderit,ece,ECE-5,Solderit,Competitions,paid_online,per_person,FALSE,100,10000,,,,,10/29/26,confirmed,,FALSE
+ece-robo-race,ece,ECE-6,Robo Race,Games and Fun,paid_online,per_person,FALSE,50,5000,,,,,10/28/26,confirmed,,FALSE
+ece-jam,ece,ECE-7,JAM,Competitions,paid_online,per_person,TRUE,50,5000,,,,,10/28/26,confirmed,,FALSE
+ece-workshop-pcb,ece,ECE-8,Workshop: PCB,Workshops and Talks,paid_online,per_person,FALSE,150,15000,,,,,10/26/26,confirmed,,FALSE
+ece-workshop-vlsi,ece,ECE-9,Workshop: VLSI,Workshops and Talks,paid_online,per_person,FALSE,250,25000,,,,,10/27/26,confirmed,,FALSE
+ece-workshop-stm32,ece,ECE-10,Workshop: STM32,Workshops and Talks,paid_online,per_team,FALSE,350,35000,,,4,4,10/28/26,confirmed,,FALSE
