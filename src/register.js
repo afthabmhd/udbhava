@@ -15,7 +15,7 @@
     cse: ['/src/UPI/CSE 1.png', '/src/UPI/CSE 2.png'],
     ads: ['/src/UPI/ADS 1.png', '/src/UPI/ADS 2.png'],
     mech: ['/src/UPI/MECH 1.png', '/src/UPI/MECH 2.png'],
-    civil: [null, null],
+    civil: ['/src/UPI/Civil 1.png', '/src/UPI/Civil 2.png'],
     eee: ['/src/UPI/EEE 1.png', '/src/UPI/EEE 2.png'],
     ece: ['/src/UPI/ECE 1.png', '/src/UPI/ECE 2.png']
   };
