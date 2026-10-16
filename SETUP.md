@@ -1,23 +1,24 @@
 # Deployment setup
 
-1. In Supabase, open the SQL editor and run the contents of schema.sql. This creates both registration tables, unique constraints, the status check, and RLS with no client policies. The API does not modify status.
+1. The configured Supabase project already has the tables from schema.sql. If setting up a different Supabase project, run schema.sql in its SQL editor. It creates both registration tables, unique constraints, the status check, and RLS with no client policies. The API does not modify status.
 2. In the Supabase project settings, copy the project URL and service-role key. Do not use the anon key for server functions and do not add either value to browser files or git.
 3. Create a Vercel project from this repository with the repository root as the project root. The project configuration runs `python build.py`, serves `public/`, discovers the Python functions in api/, and includes Events.csv in each function bundle. Current Vercel build images include Python 3.12, so no alternate build is needed.
 4. Add these environment variables in Vercel Project Settings for the environments where registration should work: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, REGISTRATION_MODE, and SITE_ORIGIN. Set REGISTRATION_MODE to test first; use live only when ready for real registrations. SITE_ORIGIN must be the full production origin, including https and the domain, with no trailing slash. Set Vercel's Preview environment separately; preview deployments are accepted only outside production.
 5. Deploy a Preview and check the event list, registration route, a test registration, and the Vercel function logs. Test mode writes only to test_registrations. Test using unique sample data and remove it from the Supabase dashboard afterward if appropriate.
-6. Add the supplied payment QR images under src/assets/upi/ using the filenames below. The registration page shows a readable placeholder for each missing file.
+6. Payment QR images are supplied under src/UPI/. For CSE, ADS, MECH, EEE, and ECE, file 1 is the primary QR and file 2 is the fallback. Civil currently displays placeholders until its QR images are supplied.
 7. After reviewing the test table entries and confirming payment/admin procedures, set REGISTRATION_MODE to live in Vercel Production settings and deploy. The function then writes to registrations.
 
-No Supabase operation has been run by this project change. The site does not provide payment verification; paid submissions remain pending until a human updates status in the Supabase dashboard.
+The Supabase project is named `udhbava` and is in Mumbai; its schema is applied. No registration rows have been inserted. The site does not provide payment verification; paid submissions remain pending until a human updates status in the Supabase dashboard.
 
-## Payment QR files to supply
+## Payment QR files
 
-- src/assets/upi/cse-1.png and src/assets/upi/cse-2.png
-- src/assets/upi/ads-1.png and src/assets/upi/ads-2.png
-- src/assets/upi/mech-1.png and src/assets/upi/mech-2.png
-- src/assets/upi/civil-1.png and src/assets/upi/civil-2.png
-- src/assets/upi/eee-1.png and src/assets/upi/eee-2.png
-- src/assets/upi/ece-1.png and src/assets/upi/ece-2.png
+- src/UPI/CSE 1.png and src/UPI/CSE 2.png
+- src/UPI/ADS 1.png and src/UPI/ADS 2.png
+- src/UPI/MECH 1.png and src/UPI/MECH 2.png
+- src/UPI/EEE 1.png and src/UPI/EEE 2.png
+- src/UPI/ECE 1.png and src/UPI/ECE 2.png
+
+Civil payment QR files have not been supplied; the page shows placeholders for both the primary and fallback QR slots.
 
 ## Local development
 

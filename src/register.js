@@ -12,12 +12,12 @@
   const mobileMenu = document.querySelector('.mobile-nav');
   const departmentNames = { cse: 'CSE', ads: 'ADS', mech: 'MECH', civil: 'CIVIL', eee: 'EEE', ece: 'ECE' };
   const QR_CONFIG = {
-    cse: ['/src/assets/upi/cse-1.png', '/src/assets/upi/cse-2.png'],
-    ads: ['/src/assets/upi/ads-1.png', '/src/assets/upi/ads-2.png'],
-    mech: ['/src/assets/upi/mech-1.png', '/src/assets/upi/mech-2.png'],
-    civil: ['/src/assets/upi/civil-1.png', '/src/assets/upi/civil-2.png'],
-    eee: ['/src/assets/upi/eee-1.png', '/src/assets/upi/eee-2.png'],
-    ece: ['/src/assets/upi/ece-1.png', '/src/assets/upi/ece-2.png']
+    cse: ['/src/UPI/CSE 1.png', '/src/UPI/CSE 2.png'],
+    ads: ['/src/UPI/ADS 1.png', '/src/UPI/ADS 2.png'],
+    mech: ['/src/UPI/MECH 1.png', '/src/UPI/MECH 2.png'],
+    civil: [null, null],
+    eee: ['/src/UPI/EEE 1.png', '/src/UPI/EEE 2.png'],
+    ece: ['/src/UPI/ECE 1.png', '/src/UPI/ECE 2.png']
   };
 
   const slug = decodeURIComponent(window.location.pathname.split('/').filter(Boolean).at(-1) || '');
