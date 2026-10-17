@@ -85,9 +85,6 @@ def _parse_price(value: str | None) -> int | float | None:
 
 def load_public_events(path: Path | None = None) -> list[dict[str, object]]:
     """Read Events.csv and expose only fields required by the website."""
-    # Test deployments intentionally accept submissions into test_registrations
-    # even while the live registration window is closed in Events.csv.
-    test_mode = resolve_registration_mode() == "test"
     with (path or EVENTS_CSV).open("r", encoding="utf-8-sig", newline="") as source:
         reader = csv.DictReader(source)
         if tuple(reader.fieldnames or ()) != CSV_HEADERS:
@@ -102,6 +99,10 @@ def load_public_events(path: Path | None = None) -> list[dict[str, object]]:
                 raise ValueError("Events.csv contains an invalid or duplicate event slug")
             if department not in DEPARTMENTS or is_open_text not in {"true", "false"}:
                 raise ValueError("Events.csv contains invalid department or registration state data")
+            # Test mode deliberately opens CSV-closed events so the full form
+            # can be exercised locally without changing the source data.
+            # Explicit closures remain authoritative in both modes.
+            test_mode = resolve_registration_mode() == "test"
             state = "closed" if slug in REGISTRATION_CLOSED else "open" if test_mode or is_open_text == "true" else "opens-soon"
             event = {
                 "slug": slug,
@@ -153,6 +154,14 @@ def validate_registration(payload: object, event: dict[str, object]) -> dict[str
     if trap.strip():
         return {"_honeypot": "1"}
     clean = {field: _clean_string(payload.get(field), field, errors) for field in required - {"website"}}
+    if errors:
+        raise RequestError(400, "invalid_request", errors)
+    for field, value in clean.items():
+        if value.startswith(("=", "+", "-", "@")):
+            # +91 is an explicitly permitted Indian phone prefix, not a formula.
+            if field == "phone" and re.fullmatch(r"\+91[6-9]\d{9}", value):
+                continue
+            errors[field] = "This value cannot start with =, +, - or @."
     if errors:
         raise RequestError(400, "invalid_request", errors)
     if clean["slug"] != event["slug"]:
@@ -217,7 +226,7 @@ def _safe_cell(value: str) -> str:
 
 def _duplicate_error(field: str) -> RequestError:
     return RequestError(409, "registration_conflict", {
-        field: "This registration could not be completed. Check the details or contact the event team."
+        field: "Already registered or payment already used."
     })
 
 
@@ -357,14 +366,14 @@ def handle_register(handler: BaseHTTPRequestHandler) -> None:
         if values.pop("_honeypot", None):
             send_json(handler, 202, {"ok": True})
             return
+        if event["registration_mode"] == "on_spot":
+            send_json(handler, 409, {"error": "registration_at_venue"})
+            return
         if event["registration_state"] == "closed":
             send_json(handler, 409, {"error": "registration_closed"})
             return
         if event["registration_state"] != "open":
             send_json(handler, 409, {"error": "registration_not_open"})
-            return
-        if event["registration_mode"] == "on_spot":
-            send_json(handler, 409, {"error": "registration_at_venue"})
             return
         insert_registration(event, values)
     except RequestError as error:

@@ -32,6 +32,7 @@
   }
 
   function feeCaption(event) {
+    if (event.registration_mode === 'free_online') return 'Free';
     return formatAmount(event.price_inr);
   }
 
@@ -139,12 +140,19 @@
   }
 
   function normalizePhone(value) {
-    return value.replace(/^\+91/, '').replace(/^0/, '');
+    if (value.startsWith('+91')) return value.slice(3);
+    if (value.startsWith('0')) return value.slice(1);
+    return value;
   }
 
   function validateClient(values, fieldNodes, event) {
     const errors = {};
     const controls = /[\u0000-\u001f\u007f\u0085\u2028\u2029]/;
+    for (const [key, value] of Object.entries(values)) {
+      if (/^[=+\-@]/.test(value) && !(key === 'phone' && /^\+91[6-9]\d{9}$/.test(value))) {
+        errors[key] = 'This value cannot start with =, +, - or @.';
+      }
+    }
     const name = values.name;
     if (name.length < 2 || name.length > 80 || controls.test(name) || !/[\p{L}]/u.test(name) || !/^[\p{L} .'-]+$/u.test(name)) {
       errors.name = 'Enter a name using letters and basic punctuation (2–80 characters).';
@@ -170,6 +178,11 @@
   }
 
   function showRegistrationState(event) {
+    if (event.registration_mode === 'on_spot') {
+      statePanel.textContent = 'Registration at the venue';
+      statePanel.hidden = false;
+      return true;
+    }
     if (event.registration_state === 'closed') {
       statePanel.textContent = 'Registration closed';
       statePanel.hidden = false;
@@ -177,11 +190,6 @@
     }
     if (event.registration_state !== 'open') {
       statePanel.textContent = 'Registration opens soon';
-      statePanel.hidden = false;
-      return true;
-    }
-    if (event.registration_mode === 'on_spot') {
-      statePanel.textContent = 'Registration at the venue';
       statePanel.hidden = false;
       return true;
     }
@@ -204,7 +212,7 @@
       registration_closed: 'Registration is closed for this event.',
       registration_not_open: 'Registration opens soon. Check back for updates.',
       registration_at_venue: 'Registration is at the event venue.',
-      registration_conflict: 'This registration could not be completed. Check the details or contact the event team.',
+      registration_conflict: 'Already registered or payment already used.',
       try_again_later: 'Too many attempts. Please wait a moment and try again.',
       request_too_large: 'The registration could not be submitted. Check the form and try again.',
       request_rejected: 'The registration could not be submitted. Reload this page and try again.'

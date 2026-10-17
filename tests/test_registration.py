@@ -114,6 +114,9 @@ class RegistrationServerTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(len(result["events"]), 63)
         self.assertEqual(tuple(result["events"][0]), service.EVENT_FIELDS)
+        serialized = json.dumps(result)
+        self.assertNotIn("SUPABASE", serialized)
+        self.assertNotIn("REGISTRATION_MODE", serialized)
         self.assertEqual(headers["Cache-Control"], "no-store")
         self.assertEqual(headers["X-Frame-Options"], "DENY")
         self.assertEqual(headers["Referrer-Policy"], "strict-origin-when-cross-origin")
@@ -129,6 +132,12 @@ class RegistrationServerTests(unittest.TestCase):
         self.assertEqual(status, 200)
         content_type = next(value for key, value in headers.items() if key.lower() == "content-type")
         self.assertTrue(content_type.startswith("text/html"))
+        _, page, _ = self.request("GET", f"/register/{self.paid_slug}")
+        page_text = page.decode("utf-8")
+        self.assertIn('href="/registration.css?', page_text)
+        self.assertIn('src="/src/register.js?', page_text)
+        for asset in ("/styles.css", "/typography.css", "/events.css", "/registration.css", "/src/site-footer.css"):
+            self.assertEqual(self.request("GET", asset)[0], 200)
         self.assertEqual(self.request("GET", "/register/not-a-real-event")[0], 404)
 
     def test_all_pages_receive_a_csp_compatible_with_fonts_and_site_assets(self):
@@ -144,14 +153,14 @@ class RegistrationServerTests(unittest.TestCase):
                 self.assertIn("connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com", csp)
 
     def test_paid_registration_uses_supabase_stub_and_server_event_department(self):
-        status, result, _ = self.request("POST", "/api/register", self.valid_payload(college="=SNGCET"))
+        status, result, _ = self.request("POST", "/api/register", self.valid_payload())
         self.assertEqual(status, 201, result)
         self.assertEqual(len(self.database_stub), 1)
         table, saved = self.database_stub[0]
         event = service.events_by_slug()[self.paid_slug]
         self.assertEqual(table, "test_registrations")
         self.assertEqual(saved["department_id"], event["department_id"])
-        self.assertEqual(saved["college"], "=SNGCET")
+        self.assertEqual(saved["college"], "SNGCET")
         self.assertNotIn("status", saved)
         self.assertNotIn("submitted_at", saved)
         self.assertFalse(hasattr(server, "DATA_DIR"))
@@ -160,10 +169,10 @@ class RegistrationServerTests(unittest.TestCase):
         self.assertEqual(self.request("POST", "/api/register", self.valid_payload())[0], 201)
         status, result, _ = self.request("POST", "/api/register", self.valid_payload(upi_txn_id="999999999999"))
         self.assertEqual(status, 409)
-        self.assertIn("could not be completed", result["field_errors"]["college_reg_no"])
+        self.assertEqual(result["field_errors"]["college_reg_no"], "Already registered or payment already used.")
         status, result, _ = self.request("POST", "/api/register", self.valid_payload(college_reg_no="SNG23CS002"))
         self.assertEqual(status, 409)
-        self.assertIn("could not be completed", result["field_errors"]["upi_txn_id"])
+        self.assertEqual(result["field_errors"]["upi_txn_id"], "Already registered or payment already used.")
 
     def test_free_registration_omits_upi_and_on_spot_is_rejected(self):
         payload = self.valid_payload(self.free_slug)
@@ -177,15 +186,15 @@ class RegistrationServerTests(unittest.TestCase):
         closed["website"] = "filled"
         self.assertEqual(self.request("POST", "/api/register", closed)[0], 202)
         self.assertEqual(self.request("POST", "/api/register", self.valid_payload("unknown-event"))[0], 404)
-        # Test mode opens events into the test table regardless of the live CSV
-        # flag; the same event remains unavailable in live mode.
-        test_event = next(event for event in service.load_public_events() if event["slug"] != "cse-hackathon")
-        self.assertEqual(test_event["registration_state"], "open")
-        live_event = next(event for event in service.load_public_events() if event["slug"] != "cse-hackathon")
+        test_open = next(event for event in service.load_public_events() if event["slug"] not in service.REGISTRATION_CLOSED and event["registration_mode"] != "on_spot")
+        self.assertEqual(test_open["registration_state"], "open")
+        self.assertEqual(self.request("POST", "/api/register", self.valid_payload(test_open["slug"]))[0], 201)
         with patch.dict(os.environ, {"REGISTRATION_MODE": "live"}):
-            live_events = {event["slug"]: event for event in service.load_public_events()}
-            self.assertEqual(live_events[live_event["slug"]]["registration_state"], "opens-soon")
+            live_event = next(event for event in service.load_public_events() if event["registration_state"] == "opens-soon" and event["registration_mode"] != "on_spot")
             self.assertEqual(self.request("POST", "/api/register", self.valid_payload(live_event["slug"]))[0], 409)
+        test_event = next(event for event in service.load_public_events() if event["slug"] == live_event["slug"])
+        self.assertEqual(test_event["registration_state"], "open")
+        self.assertEqual(self.request("POST", "/api/register", self.valid_payload(live_event["slug"], college_reg_no="SNG23CS009", upi_txn_id="123456789099"))[0], 201)
 
     def test_input_validation_origin_body_size_and_content_type(self):
         payload = self.valid_payload()
@@ -194,6 +203,31 @@ class RegistrationServerTests(unittest.TestCase):
         self.assertEqual(self.request("POST", "/api/register", payload, origin="https://attacker.invalid")[0], 403)
         self.assertEqual(self.request("POST", "/api/register", raw_body=b"x" * 5121)[0], 413)
         self.assertEqual(self.request("POST", "/api/register", raw_body=b'{"slug":"x","slug":"y"}')[0], 400)
+
+    def test_formula_prefixed_text_is_rejected(self):
+        for field, value in (("name", "=Asha Nair"), ("college", "+SNGCET"), ("college_reg_no", "-SNG23CS001"), ("college", "@SNGCET")):
+            with self.subTest(field=field):
+                status, result, _ = self.request("POST", "/api/register", self.valid_payload(**{field: value}))
+                self.assertEqual(status, 400)
+                self.assertIn(field, result["field_errors"])
+
+    def test_registration_fields_enforce_server_validation(self):
+        invalid_values = (
+            ("name", "A"),
+            ("name", "A" * 81),
+            ("college", "X"),
+            ("college", "C" * 121),
+            ("phone", "1234567890"),
+            ("college_reg_no", "AB"),
+            ("college_reg_no", "BAD!REG"),
+            ("upi_txn_id", "12345"),
+            ("college", "SNGCET\nCampus"),
+        )
+        for field, value in invalid_values:
+            with self.subTest(field=field, value=value[:12]):
+                status, result, _ = self.request("POST", "/api/register", self.valid_payload(**{field: value}))
+                self.assertEqual(status, 400)
+                self.assertIn(field, result["field_errors"])
 
     def test_supabase_rest_insert_uses_mode_and_database_defaults(self):
         class Response:

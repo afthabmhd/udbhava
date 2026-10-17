@@ -45,7 +45,8 @@
     return id === 'all' ? null : departments.find(department => department.id === id);
   }
 
-  function formatFee(price) {
+  function formatFee(price, registrationMode) {
+    if (registrationMode === 'free_online') return 'Free';
     if (price === null || price === undefined || price === '') return 'Not specified';
     const amount = Number(price);
     if (!Number.isFinite(amount)) return 'Not specified';
@@ -151,7 +152,7 @@
     fee.className = 'event-card__meta-row';
     fee.innerHTML = '<span class="event-card__meta-icon" aria-hidden="true">₹</span>';
     const feeText = document.createElement('span');
-    feeText.textContent = `FEE ${formatFee(event.price_inr)}`;
+    feeText.textContent = `FEE ${formatFee(event.price_inr, event.registration_mode)}`;
     fee.append(feeText);
     metadata.append(fee);
     const prizePool = formatPrizePool(event.prize_pool);
@@ -225,17 +226,21 @@
     addFact('DEPARTMENT', department?.code || event.department_id.toUpperCase());
     addFact('REGISTRATION', modes[event.registration_mode] || 'To be announced');
     addFact('FEE BASIS', event.fee_basis || 'Not specified');
-    addFact('FEE', formatFee(event.price_inr));
+    addFact('FEE', formatFee(event.price_inr, event.registration_mode));
     document.getElementById('dialog-prizes-section').hidden = true;
     document.getElementById('dialog-rules-section').hidden = true;
     const registration = document.getElementById('dialog-registration');
+    const registerButton = document.getElementById('dialog-register-button');
     registration.textContent = event.registration_state === 'closed'
       ? 'Registration is closed for this event.'
       : event.registration_state === 'opens-soon'
         ? 'Registration opens soon. Check back for updates.'
         : event.registration_mode === 'on_spot'
           ? 'Registration is open at the event venue.'
-          : 'Registration is open. Follow the official festival registration link.';
+          : 'Registration is open. Complete the form to reserve your place.';
+    const canRegisterOnline = event.registration_state === 'open' && event.registration_mode !== 'on_spot';
+    registerButton.hidden = !canRegisterOnline;
+    if (canRegisterOnline) registerButton.href = `/register/${encodeURIComponent(event.slug)}`;
     if (!dialog.open) dialog.showModal();
     dialogClose.focus();
   }

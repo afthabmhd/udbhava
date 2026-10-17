@@ -96,6 +96,10 @@
 .dialog-section h3{margin:0 0 10px;color:#d4a8ff;font:600 13px/1.4 var(--font-body);letter-spacing:.06em}
 .dialog-section ul{display:grid;gap:7px;margin:0;padding-left:18px;color:#c6bbd2;font-size:14px;line-height:1.6}
 .dialog-registration{margin:22px 0 0;padding:11px 13px;border-left:2px solid #a85aff;color:#e0d5ee;background:rgba(91,42,137,.2);font-size:13px;line-height:1.6}
+.dialog-register-button{display:inline-flex;align-items:center;gap:12px;margin-top:16px;padding:12px 18px;border:1px solid rgba(190,127,255,.9);border-radius:4px;color:#fff;background:linear-gradient(110deg,rgba(126,54,203,.96),rgba(70,34,114,.92));font:600 13px/1.2 var(--font-ui);letter-spacing:.12em;text-decoration:none;box-shadow:0 0 22px rgba(156,75,255,.22);transition:transform .18s ease,box-shadow .18s ease,background .18s ease}
+.dialog-register-button:hover{transform:translateY(-2px);box-shadow:0 0 28px rgba(176,106,255,.4);background:linear-gradient(110deg,#974aff,#5c2c94)}
+.dialog-register-button:focus-visible{outline:2px solid #f1d8ff;outline-offset:3px}
+.dialog-register-button[hidden]{display:none}
 @media(max-width:1280px){.event-browser{width:calc(100% - 56px)}
 .events-filters{grid-template-columns:1fr;gap:15px}
 .filter-group--departments{padding-top:13px;border-top:1px solid rgba(169,148,199,.14)}
