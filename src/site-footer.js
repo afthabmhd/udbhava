@@ -13,6 +13,7 @@
         <nav class="site-footer__links" aria-label="Footer navigation">
           <a href="./index.html#home">HOME</a>
           <a href="./events.html">EVENTS</a>
+          <a href="./about.html">ABOUT</a>
           <a href="./index.html#register">REGISTER <span aria-hidden="true">↗</span></a>
         </nav>
       </div>

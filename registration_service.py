@@ -85,6 +85,9 @@ def _parse_price(value: str | None) -> int | float | None:
 
 def load_public_events(path: Path | None = None) -> list[dict[str, object]]:
     """Read Events.csv and expose only fields required by the website."""
+    # Test deployments intentionally accept submissions into test_registrations
+    # even while the live registration window is closed in Events.csv.
+    test_mode = resolve_registration_mode() == "test"
     with (path or EVENTS_CSV).open("r", encoding="utf-8-sig", newline="") as source:
         reader = csv.DictReader(source)
         if tuple(reader.fieldnames or ()) != CSV_HEADERS:
@@ -99,7 +102,7 @@ def load_public_events(path: Path | None = None) -> list[dict[str, object]]:
                 raise ValueError("Events.csv contains an invalid or duplicate event slug")
             if department not in DEPARTMENTS or is_open_text not in {"true", "false"}:
                 raise ValueError("Events.csv contains invalid department or registration state data")
-            state = "closed" if slug in REGISTRATION_CLOSED else "open" if is_open_text == "true" else "opens-soon"
+            state = "closed" if slug in REGISTRATION_CLOSED else "open" if test_mode or is_open_text == "true" else "opens-soon"
             event = {
                 "slug": slug,
                 "name": _empty_as_none(row.get("name")),

@@ -177,8 +177,15 @@ class RegistrationServerTests(unittest.TestCase):
         closed["website"] = "filled"
         self.assertEqual(self.request("POST", "/api/register", closed)[0], 202)
         self.assertEqual(self.request("POST", "/api/register", self.valid_payload("unknown-event"))[0], 404)
-        not_open = next(event["slug"] for event in service.load_public_events() if event["registration_state"] == "opens-soon")
-        self.assertEqual(self.request("POST", "/api/register", self.valid_payload(not_open))[0], 409)
+        # Test mode opens events into the test table regardless of the live CSV
+        # flag; the same event remains unavailable in live mode.
+        test_event = next(event for event in service.load_public_events() if event["slug"] != "cse-hackathon")
+        self.assertEqual(test_event["registration_state"], "open")
+        live_event = next(event for event in service.load_public_events() if event["slug"] != "cse-hackathon")
+        with patch.dict(os.environ, {"REGISTRATION_MODE": "live"}):
+            live_events = {event["slug"]: event for event in service.load_public_events()}
+            self.assertEqual(live_events[live_event["slug"]]["registration_state"], "opens-soon")
+            self.assertEqual(self.request("POST", "/api/register", self.valid_payload(live_event["slug"]))[0], 409)
 
     def test_input_validation_origin_body_size_and_content_type(self):
         payload = self.valid_payload()
