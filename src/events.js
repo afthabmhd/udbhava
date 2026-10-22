@@ -118,13 +118,16 @@
 
     const top = document.createElement('span');
     top.className = 'event-card__topline';
-    const badge = document.createElement('span');
-    badge.className = 'event-badge';
-    badge.textContent = event.event_competition || 'Event';
+    if (String(event.audience || '').trim().toLocaleLowerCase() === 'school students') {
+      const audience = document.createElement('span');
+      audience.className = 'event-badge event-badge--audience';
+      audience.textContent = 'For School Students';
+      top.append(audience);
+    }
     const department = document.createElement('span');
     department.className = 'event-department';
     department.textContent = getDepartment(event.department_id)?.code || event.department_id.toUpperCase();
-    top.append(badge, department);
+    top.append(department);
 
     const imageFrame = document.createElement('span');
     imageFrame.className = 'event-card__image-frame';
@@ -149,12 +152,6 @@
     name.className = 'event-name';
     name.textContent = event.name;
     copy.append(name);
-    if (String(event.audience || '').trim().toLocaleLowerCase() === 'school students') {
-      const audience = document.createElement('span');
-      audience.className = 'event-audience-badge';
-      audience.textContent = 'For School Students';
-      copy.append(audience);
-    }
 
     const metadata = document.createElement('span');
     metadata.className = 'event-card__metadata';

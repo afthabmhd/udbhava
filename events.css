@@ -53,6 +53,7 @@
 .event-badge[data-category=workshops]{--event-accent:#83b998;font-size:12px}
 .event-badge[data-category=lectures]{--event-accent:#7198ff;font-size:12px}
 .event-badge[data-category=shows]{--event-accent:#e29a70;font-size:12px}
+.event-badge--audience{--event-accent:#b173ff;font-size:11px;letter-spacing:.04em;text-transform:none}
 .event-department{overflow:hidden;color:#c9bfd8;font-size:12px;letter-spacing:.08em;text-overflow:ellipsis;white-space:nowrap}
 .event-card__image-frame{position:relative;display:block;width:100%;aspect-ratio:2.02/1;overflow:hidden;border:1px solid rgba(180,160,205,.2);border-radius:3px;background:radial-gradient(ellipse at 72% 35%,rgba(96,59,143,.26),transparent 48%),linear-gradient(140deg,#08070d,#100c19 56%,#07060c)}
 .event-card__image-frame::after{position:absolute;inset:0;content:"";background:linear-gradient(180deg,rgba(5,4,10,.03),rgba(5,4,10,.08) 65%,rgba(5,4,10,.44));pointer-events:none}
@@ -61,10 +62,8 @@
 .event-art{position:absolute;inset:0;display:grid;place-items:center;color:var(--event-accent);opacity:.7;filter:drop-shadow(0 0 9px color-mix(in srgb,var(--event-accent),transparent 62%));transition:opacity .2s,transform .35s}
 .event-art svg{display:block;width:88%;height:88%;overflow:visible}
 .event-card__image-frame.is-loaded .event-art{opacity:0}
-.event-card:hover .event-art,.event-card:focus-within .event-art{opacity:.88;transform:scale(1.035)}
 .event-copy{display:flex;min-height:48px;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:3px;padding:9px 1px 1px}
 .event-name{margin:0;color:#f3eff8;font:600 clamp(18px, 1.35vw, 24px)/1.28 var(--font-body);letter-spacing:.015em;text-transform:uppercase;text-wrap:balance}
-.event-audience-badge{display:inline-flex;align-self:flex-start;max-width:100%;margin-top:7px;padding:4px 8px;border:1px solid color-mix(in srgb,var(--violet),white 18%);border-radius:999px;color:var(--white);background:color-mix(in srgb,var(--violet),#090511 76%);font:600 10px/1.3 var(--font-body);letter-spacing:.04em}
 .event-subtitle{overflow:hidden;max-width:100%;color:#a99eb6;font-size:14px;line-height:1.4;text-overflow:ellipsis;white-space:nowrap}
 .event-card__metadata{display:grid;gap:5px;margin-top:auto;padding:5px 30px 1px 1px;color:#a99bb8}
 .event-card__meta-row--prize{color:#d5c0f4}
