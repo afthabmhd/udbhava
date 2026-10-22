@@ -127,6 +127,13 @@ class RegistrationServerTests(unittest.TestCase):
         blank_prize_slug = next(event["slug"] for event in by_slug.values() if event["prize_pool"] is None)
         self.assertIsNone(by_slug[blank_prize_slug]["prize_pool"])
 
+    def test_vercel_production_always_uses_live_registrations(self):
+        with patch.dict(os.environ, {"VERCEL_ENV": "production", "REGISTRATION_MODE": "test"}):
+            self.assertEqual(service.resolve_registration_mode(), "live")
+            self.assertEqual(service.resolve_registration_mode("test"), "live")
+        with patch.dict(os.environ, {"VERCEL_ENV": "preview", "REGISTRATION_MODE": "test"}):
+            self.assertEqual(service.resolve_registration_mode(), "test")
+
     def test_registration_route_serves_known_slug_and_404s_unknown_slug(self):
         status, _, headers = self.request("GET", f"/register/{self.paid_slug}")
         self.assertEqual(status, 200)

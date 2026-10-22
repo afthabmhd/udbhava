@@ -60,6 +60,10 @@ class SupabaseError(Exception):
 
 
 def resolve_registration_mode(value: str | None = None) -> str:
+    # Production deployments always write to the production table. Keep the
+    # test table available for local development and Vercel preview deployments.
+    if os.environ.get("VERCEL_ENV", "").strip().lower() == "production":
+        return "live"
     configured = os.environ.get("REGISTRATION_MODE", "test") if value is None else value
     configured = configured.strip().lower()
     return configured if configured in {"test", "live"} else "test"
