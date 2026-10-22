@@ -10,7 +10,6 @@
   const successPanel = document.getElementById('registration-success');
   const menuButton = document.querySelector('.menu-toggle');
   const mobileMenu = document.querySelector('.mobile-nav');
-  const departmentNames = { cse: 'CSE', ads: 'ADS', mech: 'MECH', civil: 'CIVIL', eee: 'EEE', ece: 'ECE' };
   const QR_CONFIG = {
     cse: ['/src/qr/CSE 1.webp', '/src/qr/CSE 2.webp'],
     ads: ['/src/qr/ADS 1.webp', '/src/qr/ADS 2.webp'],
@@ -23,23 +22,20 @@
   const slug = decodeURIComponent(window.location.pathname.split('/').filter(Boolean).at(-1) || '');
   let currentEvent = null;
 
-  function formatAmount(amount) {
-    if (amount === null || amount === undefined || amount === '') return 'Fee to be announced';
-    const value = Number(amount);
-    if (!Number.isFinite(value)) return 'Fee to be announced';
-    if (value === 0) return 'Free';
-    return `₹${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(value)}`;
+  function feeCaption(value) {
+    if (!value) return 'Fee not available';
+    const fee = String(value).trim();
+    return /^(free|free entry|nil)$/i.test(fee) || fee.startsWith('₹') ? fee : `₹${fee}`;
   }
 
-  function feeCaption(event) {
-    if (event.registration_mode === 'free_online') return 'Free';
-    return formatAmount(event.price_inr);
+  function requiresPayment(event) {
+    if (event.department_id === 'udbhava') return false;
+    const fee = String(event.registration_fee || '').trim().toLowerCase();
+    return !['', 'n/a', 'free', 'free entry', 'nil', '0', '0.0'].includes(fee);
   }
 
-  function formatPrizePool(value) {
-    if (value === null || value === undefined || String(value).trim() === '') return '';
-    const amount = Number(value);
-    return `₹${Number.isFinite(amount) ? new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(amount) : String(value).trim()}`;
+  function isSchoolAudience(event) {
+    return String(event.audience || '').trim().toLocaleLowerCase() === 'school students';
   }
 
   function setPageError(message) {
@@ -94,16 +90,11 @@
     const section = document.createElement('section');
     section.className = 'payment-section';
     section.setAttribute('aria-labelledby', 'payment-heading');
-    const amount = document.createElement('h3');
-    amount.className = 'payment-amount';
-    amount.id = 'payment-heading';
-    const exactAmount = formatAmount(event.price_inr);
-    amount.textContent = exactAmount === 'Fee to be announced' ? 'Payment amount to be announced' : `Pay exactly ${exactAmount}`;
-    section.append(amount);
+    section.setAttribute('aria-label', 'Department payment QR codes');
     const grid = document.createElement('div');
     grid.className = 'payment-qr-grid';
-    appendQrFigure(grid, 'Scan to pay', primary);
-    appendQrFigure(grid, "Backup QR (use if the first doesn't work)", backup);
+    appendQrFigure(grid, 'Department QR', primary);
+    appendQrFigure(grid, 'Backup QR', backup);
     section.append(grid);
     return section;
   }
@@ -157,16 +148,16 @@
     if (name.length < 2 || name.length > 80 || controls.test(name) || !/[\p{L}]/u.test(name) || !/^[\p{L} .'-]+$/u.test(name)) {
       errors.name = 'Enter a name using letters and basic punctuation (2–80 characters).';
     }
-    if (values.college.length < 2 || values.college.length > 120 || controls.test(values.college)) {
-      errors.college = 'Enter your college name (2–120 characters).';
+    if ((!isSchoolAudience(event) || values.college) && (values.college.length < 2 || values.college.length > 120 || controls.test(values.college))) {
+      errors.college = isSchoolAudience(event) ? 'Enter your school name (2–120 characters).' : 'Enter your college name (2–120 characters).';
     }
     const phone = normalizePhone(values.phone);
     if (!/^[6-9]\d{9}$/.test(phone)) errors.phone = 'Enter a valid 10-digit Indian mobile number.';
     values.phone = phone;
-    if (values.college_reg_no.length < 3 || values.college_reg_no.length > 30 || !/^[A-Za-z0-9/_-]+$/.test(values.college_reg_no)) {
+    if ((!isSchoolAudience(event) || values.college_reg_no) && (values.college_reg_no.length < 3 || values.college_reg_no.length > 30 || !/^[A-Za-z0-9/_-]+$/.test(values.college_reg_no))) {
       errors.college_reg_no = 'Use 3–30 letters, numbers, hyphens, slashes or underscores.';
     }
-    if (event.registration_mode === 'paid_online' && !/^\d{12}$/.test(values.upi_txn_id)) {
+    if (requiresPayment(event) && !/^\d{12}$/.test(values.upi_txn_id || '')) {
       errors.upi_txn_id = 'Enter the 12-digit UPI reference number.';
     }
     for (const [key, controlsForField] of Object.entries(fieldNodes)) {
@@ -178,18 +169,13 @@
   }
 
   function showRegistrationState(event) {
-    if (event.registration_mode === 'on_spot') {
-      statePanel.textContent = 'Registration at the venue';
-      statePanel.hidden = false;
-      return true;
-    }
     if (event.registration_state === 'closed') {
       statePanel.textContent = 'Registration closed';
       statePanel.hidden = false;
       return true;
     }
     if (event.registration_state !== 'open') {
-      statePanel.textContent = 'Registration opens soon';
+      statePanel.textContent = 'Registration is unavailable for this event';
       statePanel.hidden = false;
       return true;
     }
@@ -200,7 +186,9 @@
     mount.replaceChildren();
     document.getElementById('qr-missing-list').hidden = true;
     document.getElementById('success-title').textContent = 'Registration submitted';
-    document.getElementById('success-copy').textContent = currentEvent.registration_mode === 'paid_online'
+    document.getElementById('success-copy').textContent = currentEvent.department_id === 'udbhava'
+      ? `Registration submitted for ${currentEvent.name}. Any fee is collected at the registration spot.`
+      : requiresPayment(currentEvent)
       ? `Registration submitted for ${currentEvent.name}. The team will verify your payment.`
       : `Registration submitted for ${currentEvent.name}. The team will review your registration.`;
     successPanel.hidden = false;
@@ -211,7 +199,6 @@
     return ({
       registration_closed: 'Registration is closed for this event.',
       registration_not_open: 'Registration opens soon. Check back for updates.',
-      registration_at_venue: 'Registration is at the event venue.',
       registration_conflict: 'Already registered or payment already used.',
       try_again_later: 'Too many attempts. Please wait a moment and try again.',
       request_too_large: 'The registration could not be submitted. Check the form and try again.',
@@ -224,7 +211,7 @@
     form.className = 'registration-form';
     form.noValidate = true;
     const heading = document.createElement('h3');
-    heading.textContent = event.fee_basis === 'per_team' ? 'TEAM LEADER DETAILS' : 'PARTICIPANT DETAILS';
+    heading.textContent = 'REGISTRANT DETAILS';
     form.append(heading);
 
     const honeypot = document.createElement('div');
@@ -244,12 +231,20 @@
 
     const fieldNodes = {};
     fieldNodes.name = field(form, { key: 'name', label: 'Name', autocomplete: 'name', placeholder: 'Your full name' });
-    fieldNodes.college = field(form, { key: 'college', label: 'College', autocomplete: 'organization', placeholder: 'Your college name' });
+    const schoolAudience = isSchoolAudience(event);
+    fieldNodes.college = field(form, {
+      key: 'college', label: schoolAudience ? 'School Name' : 'College', autocomplete: 'organization',
+      placeholder: schoolAudience ? 'Your school name (optional)' : 'Your college name', required: !schoolAudience
+    });
     fieldNodes.phone = field(form, { key: 'phone', label: 'Phone No.', type: 'tel', autocomplete: 'tel', inputmode: 'tel', placeholder: '10-digit Indian mobile number' });
-    fieldNodes.college_reg_no = field(form, { key: 'college_reg_no', label: 'College Registration No.', autocomplete: 'off', placeholder: 'Your college registration number' });
+    fieldNodes.college_reg_no = field(form, {
+      key: 'college_reg_no', label: schoolAudience ? 'School ID / Admission No.' : 'College Registration No.',
+      type: 'text', autocomplete: 'off', placeholder: schoolAudience ? 'Optional school ID or admission number' : 'Your college registration number',
+      required: !schoolAudience
+    });
 
-    if (event.registration_mode === 'paid_online') {
-      form.append(renderPayment(event));
+    if (event.department_id !== 'udbhava') form.append(renderPayment(event));
+    if (requiresPayment(event)) {
       fieldNodes.upi_txn_id = field(form, {
         key: 'upi_txn_id', label: 'UPI Transaction ID', autocomplete: 'off', inputmode: 'numeric',
         placeholder: '12-digit reference number',
@@ -264,9 +259,7 @@
     submit.type = 'submit';
     submit.textContent = 'SUBMIT REGISTRATION';
     const note = document.createElement('p');
-    note.textContent = event.fee_basis === 'per_team'
-      ? 'Submit once for the team as its leader.'
-      : 'Submit one registration per participant.';
+    note.textContent = 'Submit using the details of the participant or team leader, as applicable.';
     submitRow.append(submit, note);
     form.append(submitRow);
 
@@ -326,19 +319,9 @@
       }
       document.title = `Register for ${currentEvent.name} — UDBHAVA ’26`;
       document.getElementById('event-name').textContent = currentEvent.name;
-      document.getElementById('registration-department').textContent = `${departmentNames[currentEvent.department_id] || currentEvent.department_id.toUpperCase()} / EVENT REGISTRATION`;
+      document.getElementById('registration-kicker').textContent = currentEvent.department_id === 'udbhava' ? 'SPOT REGISTRATION' : 'EVENT REGISTRATION';
       const fee = document.getElementById('event-fee');
-      fee.replaceChildren();
-      fee.append(document.createTextNode(feeCaption(currentEvent)));
-      if (currentEvent.fee_basis === 'per_team' || currentEvent.fee_basis === 'per_person') {
-        const basis = document.createElement('small');
-        basis.textContent = currentEvent.fee_basis === 'per_team' ? 'PER TEAM' : 'PER PERSON';
-        fee.append(basis);
-      }
-      const prizePool = formatPrizePool(currentEvent.prize_pool);
-      const prize = document.getElementById('event-prize');
-      prize.hidden = !prizePool;
-      prize.textContent = prizePool ? `PRIZE POOL ${prizePool}` : '';
+      fee.textContent = feeCaption(currentEvent.registration_fee);
       if (!showRegistrationState(currentEvent)) renderForm(currentEvent);
       loading.hidden = true;
       eventPanel.hidden = false;

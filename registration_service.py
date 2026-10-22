@@ -8,7 +8,7 @@ import os
 import re
 import ssl
 import unicodedata
-from decimal import Decimal, InvalidOperation
+from datetime import datetime
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -17,17 +17,17 @@ from urllib.request import Request, urlopen
 
 
 ROOT = Path(__file__).resolve().parent
-EVENTS_CSV = ROOT / "Events.csv"
-DEPARTMENTS = frozenset({"cse", "ads", "mech", "civil", "eee", "ece"})
-REGISTRATION_CLOSED = frozenset({"cse-hackathon"})
+EVENTS_CSV = ROOT / "udbhava_events.csv"
+DEPARTMENTS = frozenset({"udbhava", "cse", "ads", "mech", "civil", "eee", "ece"})
 CSV_HEADERS = (
-    "slug", "department_id", "guide_ref", "name", "display_group", "registration_mode",
-    "fee_basis", "fee_basis_confirmed", "price_inr", "prize_pool", "capacity",
-    "capacity_unit", "team_min", "team_max", "event_dates", "date_status", "group_slug", "is_open",
+    "slug", "Event Name", "Event Competition", "Date", "Time", "First Prize",
+    "Second Prize", "Third Prize", "Description", "Department", "Contact Numbers",
+    "Registration Fee", "Venue", "Registration State", "Audience",
 )
 EVENT_FIELDS = (
-    "slug", "name", "department_id", "registration_mode", "fee_basis", "price_inr", "prize_pool",
-    "registration_state",
+    "slug", "name", "department_id", "audience", "event_competition", "event_dates", "event_time",
+    "first_prize", "second_prize", "third_prize", "description", "contact_numbers",
+    "registration_fee", "venue", "registration_state",
 )
 REGISTRATION_FIELDS = (
     "department_id", "event_slug", "name", "college", "phone", "college_reg_no", "upi_txn_id",
@@ -74,52 +74,80 @@ def _empty_as_none(value: str | None) -> str | None:
     return value or None
 
 
-def _parse_price(value: str | None) -> int | float | None:
+def _available(value: str | None) -> str | None:
     value = _empty_as_none(value)
+    return None if value is None or value.casefold() == "n/a" else value
+
+
+def _parse_event_dates(value: str | None) -> list[str] | None:
+    value = _available(value)
+    if value is None:
+        return None
+    dates = [part.strip() for part in value.split(",")]
+    if not dates or any(not date for date in dates):
+        raise ValueError("Invalid event date")
+    try:
+        for date in dates:
+            datetime.strptime(date, "%d/%m/%Y")
+    except ValueError as exc:
+        raise ValueError("Invalid event date") from exc
+    return dates
+
+
+def _parse_event_time(value: str | None) -> str | None:
+    value = _available(value)
     if value is None:
         return None
     try:
-        amount = Decimal(value)
-    except InvalidOperation as exc:
-        raise ValueError("Invalid event price") from exc
-    if not amount.is_finite() or amount < 0:
-        raise ValueError("Invalid event price")
-    return int(amount) if amount == amount.to_integral_value() else float(amount)
+        datetime.strptime(value, "%I:%M %p")
+    except ValueError as exc:
+        raise ValueError("Invalid event time") from exc
+    return value
+
+
+def event_requires_payment(event: dict[str, object]) -> bool:
+    if str(event.get("department_id") or "").strip().casefold() == "udbhava":
+        return False  # Udbhava-level events collect any fee at the registration spot.
+    fee = str(event.get("registration_fee") or "").strip().casefold()
+    return fee not in {"", "n/a", "free", "free entry", "nil", "0", "0.0"}
 
 
 def load_public_events(path: Path | None = None) -> list[dict[str, object]]:
-    """Read Events.csv and expose only fields required by the website."""
+    """Read and validate the active Udbhava event source for the website."""
     with (path or EVENTS_CSV).open("r", encoding="utf-8-sig", newline="") as source:
         reader = csv.DictReader(source)
         if tuple(reader.fieldnames or ()) != CSV_HEADERS:
-            raise ValueError("Events.csv has an unexpected header")
+            raise ValueError("udbhava_events.csv has an unexpected header")
         events = []
         seen = set()
         for row in reader:
             slug = (row.get("slug") or "").strip()
-            department = (row.get("department_id") or "").strip().lower()
-            is_open_text = (row.get("is_open") or "").strip().lower()
+            department = (row.get("Department") or "").strip().lower()
+            source_state = (row.get("Registration State") or "").strip().lower()
             if None in row or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug) or slug in seen:
-                raise ValueError("Events.csv contains an invalid or duplicate event slug")
-            if department not in DEPARTMENTS or is_open_text not in {"true", "false"}:
-                raise ValueError("Events.csv contains invalid department or registration state data")
-            # Test mode deliberately opens CSV-closed events so the full form
-            # can be exercised locally without changing the source data.
-            # Explicit closures remain authoritative in both modes.
-            test_mode = resolve_registration_mode() == "test"
-            state = "closed" if slug in REGISTRATION_CLOSED else "open" if test_mode or is_open_text == "true" else "opens-soon"
+                raise ValueError("udbhava_events.csv contains an invalid or duplicate event slug")
+            if department not in DEPARTMENTS or source_state not in {"open", "closed", "n/a"}:
+                raise ValueError("udbhava_events.csv contains invalid department or registration state data")
+            state = source_state if source_state in {"open", "closed"} else "not-open"
             event = {
                 "slug": slug,
-                "name": _empty_as_none(row.get("name")),
+                "name": _available(row.get("Event Name")),
                 "department_id": department,
-                "registration_mode": _empty_as_none(row.get("registration_mode")),
-                "fee_basis": _empty_as_none(row.get("fee_basis")),
-                "price_inr": _parse_price(row.get("price_inr")),
-                "prize_pool": _empty_as_none(row.get("prize_pool")),
+                "audience": _available(row.get("Audience")),
+                "event_competition": _available(row.get("Event Competition")),
+                "event_dates": _parse_event_dates(row.get("Date")),
+                "event_time": _parse_event_time(row.get("Time")),
+                "first_prize": _available(row.get("First Prize")),
+                "second_prize": _available(row.get("Second Prize")),
+                "third_prize": _available(row.get("Third Prize")),
+                "description": _available(row.get("Description")),
+                "contact_numbers": _available(row.get("Contact Numbers")),
+                "registration_fee": _available(row.get("Registration Fee")),
+                "venue": _available(row.get("Venue")),
                 "registration_state": state,
             }
-            if not event["name"] or event["registration_mode"] not in {"paid_online", "free_online", "on_spot"}:
-                raise ValueError("Events.csv contains incomplete event data")
+            if not event["name"]:
+                raise ValueError("udbhava_events.csv contains incomplete event data")
             seen.add(slug)
             events.append(event)
         return events
@@ -147,11 +175,12 @@ def validate_registration(payload: object, event: dict[str, object]) -> dict[str
     if not isinstance(payload, dict):
         raise RequestError(400, "invalid_request")
     required = {"slug", "name", "college", "phone", "college_reg_no", "website"}
-    if event["registration_mode"] == "paid_online":
+    if event_requires_payment(event):
         required.add("upi_txn_id")
     if set(payload) != required:
         raise RequestError(400, "invalid_request")
     errors: dict[str, str] = {}
+    school_audience = str(event.get("audience") or "").strip().casefold() == "school students"
     trap = payload.get("website")
     if not isinstance(trap, str):
         raise RequestError(400, "invalid_request")
@@ -173,16 +202,20 @@ def validate_registration(payload: object, event: dict[str, object]) -> dict[str
     name = clean["name"]
     if not 2 <= len(name) <= 80 or not any(char.isalpha() for char in name) or any(not (char.isalpha() or char in " .'-") for char in name):
         errors["name"] = "Enter a name using letters and basic punctuation (2–80 characters)."
-    if not 2 <= len(clean["college"]) <= 120:
+    if not school_audience and not 2 <= len(clean["college"]) <= 120:
         errors["college"] = "Enter your college name (2–120 characters)."
+    elif clean["college"] and not 2 <= len(clean["college"]) <= 120:
+        errors["college"] = "Enter your school name (2–120 characters)."
     phone = re.sub(r"^(?:\+91|0)", "", clean["phone"])
     if not re.fullmatch(r"[6-9]\d{9}", phone):
         errors["phone"] = "Enter a valid 10-digit Indian mobile number."
     clean["phone"] = phone
     reg_no = clean["college_reg_no"]
-    if not 3 <= len(reg_no) <= 30 or not re.fullmatch(r"[A-Za-z0-9/_-]+", reg_no):
+    if (not school_audience and (not 3 <= len(reg_no) <= 30 or not re.fullmatch(r"[A-Za-z0-9/_-]+", reg_no))) or (
+        school_audience and reg_no and (not 3 <= len(reg_no) <= 30 or not re.fullmatch(r"[A-Za-z0-9/_-]+", reg_no))
+    ):
         errors["college_reg_no"] = "Use 3–30 letters, numbers, hyphens, slashes or underscores."
-    if event["registration_mode"] == "paid_online":
+    if event_requires_payment(event):
         if not re.fullmatch(r"\d{12}", clean["upi_txn_id"]):
             errors["upi_txn_id"] = "Enter the 12-digit UPI reference number."
     else:
@@ -248,9 +281,9 @@ def insert_registration(event: dict[str, object], values: dict[str, str], mode: 
         "department_id": event["department_id"],
         "event_slug": event["slug"],
         "name": values["name"],
-        "college": values["college"],
+        "college": values["college"] or None,
         "phone": values["phone"],
-        "college_reg_no": values["college_reg_no"],
+        "college_reg_no": values["college_reg_no"] or None,
         "upi_txn_id": values["upi_txn_id"] or None,
     }
     request = Request(
@@ -365,19 +398,14 @@ def handle_register(handler: BaseHTTPRequestHandler) -> None:
     if event is None:
         send_json(handler, 404, {"error": "event_not_found"})
         return
+    if event["registration_state"] != "open":
+        code = "registration_closed" if event["registration_state"] == "closed" else "registration_not_open"
+        send_json(handler, 409, {"error": code})
+        return
     try:
         values = validate_registration(payload, event)
         if values.pop("_honeypot", None):
             send_json(handler, 202, {"ok": True})
-            return
-        if event["registration_mode"] == "on_spot":
-            send_json(handler, 409, {"error": "registration_at_venue"})
-            return
-        if event["registration_state"] == "closed":
-            send_json(handler, 409, {"error": "registration_closed"})
-            return
-        if event["registration_state"] != "open":
-            send_json(handler, 409, {"error": "registration_not_open"})
             return
         insert_registration(event, values)
     except RequestError as error:

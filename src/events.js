@@ -14,6 +14,7 @@
   const menuButton = page.querySelector('.menu-toggle');
   const mobileMenu = page.querySelector('.mobile-nav');
   const departmentPresentation = {
+    udbhava: { code: 'UDBHAVA', accent: '#bd79ff' },
     cse: { code: 'CSE', accent: '#bd79ff', logo: 'techranti' },
     ece: { code: 'ECE', accent: '#8b8dff', logo: 'technova' },
     eee: { code: 'EEE', accent: '#bd65ff', logo: 'dyuthi' },
@@ -21,23 +22,16 @@
     civil: { code: 'CIVIL', accent: '#9f83ff', logo: 'arcvil' },
     ads: { code: 'AI&DS', accent: '#8a8fff', logo: 'sankalpa' }
   };
-  const departmentOrder = ['cse', 'ece', 'eee', 'mech', 'civil', 'ads'];
-  const registrationLabels = {
-    closed: 'Registration closed',
-    'opens-soon': 'Registration opens soon',
-    open: 'Register'
-  };
-  const modes = {
-    paid_online: 'Paid online',
-    free_online: 'Free online',
-    on_spot: 'On spot'
-  };
+  const departmentOrder = ['udbhava', 'cse', 'ece', 'eee', 'mech', 'civil', 'ads'];
+  const registrationLabels = { closed: 'Registration closed', 'not-open': 'Registration unavailable', open: 'Register' };
   const networkArt = '<svg viewBox="0 0 340 200" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m170 43-72 39 4 54 67 35 72-39-2-53-69-36Z" stroke="currentColor" stroke-width="2"/><path d="m98 82 71 39 72-42m-69-36v78m-66 15 66-39 69 14m-67 25v35" stroke="currentColor"/><circle cx="170" cy="43" r="5" fill="#080610" stroke="currentColor" stroke-width="2"/><circle cx="98" cy="82" r="5" fill="#080610" stroke="currentColor" stroke-width="2"/><circle cx="241" cy="81" r="5" fill="#080610" stroke="currentColor" stroke-width="2"/><circle cx="102" cy="136" r="5" fill="#080610" stroke="currentColor" stroke-width="2"/><circle cx="241" cy="132" r="5" fill="#080610" stroke="currentColor" stroke-width="2"/><circle cx="169" cy="171" r="5" fill="#080610" stroke="currentColor" stroke-width="2"/></svg>';
 
   let events = [];
   let departments = [];
   let selectedDepartment = 'all';
-  let selectedMode = 'all';
+  const eventTypes = ['workshops', 'lectures', 'shows', 'competitions'];
+  let selectedCompetition = new URLSearchParams(window.location.search).get('category') || 'all';
+  if (!eventTypes.includes(selectedCompetition)) selectedCompetition = 'all';
   let searchQuery = '';
   let returnFocus = null;
 
@@ -45,19 +39,27 @@
     return id === 'all' ? null : departments.find(department => department.id === id);
   }
 
-  function formatFee(price, registrationMode) {
-    if (registrationMode === 'free_online') return 'Free';
-    if (price === null || price === undefined || price === '') return 'Not specified';
-    const amount = Number(price);
-    if (!Number.isFinite(amount)) return 'Not specified';
-    if (amount === 0) return 'Free';
-    return `₹${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(amount)}`;
+  function formatFee(value) {
+    if (!value) return 'Not available';
+    const fee = String(value).trim();
+    return /^(free|free entry|nil)$/i.test(fee) || fee.startsWith('₹') ? fee : `₹${fee}`;
   }
 
-  function formatPrizePool(value) {
-    if (value === null || value === undefined || String(value).trim() === '') return '';
-    const amount = Number(value);
-    return `₹${Number.isFinite(amount) ? new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(amount) : String(value).trim()}`;
+  function formatEventDates(event) {
+    const dates = Array.isArray(event.event_dates) ? event.event_dates : [];
+    return [...dates, event.event_time].filter(Boolean).join(' · ');
+  }
+
+  function eventPrizes(event) {
+    return [event.first_prize, event.second_prize, event.third_prize].filter(Boolean);
+  }
+
+  function eventType(event) {
+    const text = `${event.name} ${event.event_competition || ''}`.toLocaleLowerCase();
+    if (/workshop|hands-on session/.test(text)) return 'workshops';
+    if (/lecture|webinar|talk|keynote|expert session/.test(text)) return 'lectures';
+    if (/\bshow\b|concert|performance|stunt|paattoholic|dj night|music show/.test(text)) return 'shows';
+    return 'competitions';
   }
 
   function renderDepartments() {
@@ -97,8 +99,9 @@
   function activeEvents() {
     const query = searchQuery.trim().toLocaleLowerCase();
     return events.filter(event => selectedDepartment === 'all' || event.department_id === selectedDepartment)
-      .filter(event => selectedMode === 'all' || event.registration_mode === selectedMode)
-      .filter(event => !query || [event.name, event.department_id, event.registration_mode, event.fee_basis].join(' ').toLocaleLowerCase().includes(query));
+      .filter(event => selectedCompetition === 'all' || eventType(event) === selectedCompetition)
+      .filter(event => !query || [event.name, event.department_id, event.event_competition, event.registration_fee, event.description, event.venue, event.audience].join(' ').toLocaleLowerCase().includes(query))
+      .sort((left, right) => Number(right.department_id === 'udbhava') - Number(left.department_id === 'udbhava'));
   }
 
   function createEventCard(event) {
@@ -117,7 +120,7 @@
     top.className = 'event-card__topline';
     const badge = document.createElement('span');
     badge.className = 'event-badge';
-    badge.textContent = modes[event.registration_mode] || 'Event';
+    badge.textContent = event.event_competition || 'Event';
     const department = document.createElement('span');
     department.className = 'event-department';
     department.textContent = getDepartment(event.department_id)?.code || event.department_id.toUpperCase();
@@ -128,7 +131,8 @@
     imageFrame.setAttribute('aria-hidden', 'true');
     const image = document.createElement('img');
     image.className = 'event-card__image';
-    image.src = `./src/assets/events/${event.slug}.webp`;
+    const imageSlug = event.slug === 'ece-robo-soccer' ? 'ads-robo-soccer' : event.slug;
+    image.src = `./src/assets/events/${imageSlug}.webp`;
     image.alt = '';
     image.loading = 'lazy';
     image.decoding = 'async';
@@ -145,25 +149,38 @@
     name.className = 'event-name';
     name.textContent = event.name;
     copy.append(name);
+    if (String(event.audience || '').trim().toLocaleLowerCase() === 'school students') {
+      const audience = document.createElement('span');
+      audience.className = 'event-audience-badge';
+      audience.textContent = 'For School Students';
+      copy.append(audience);
+    }
 
     const metadata = document.createElement('span');
     metadata.className = 'event-card__metadata';
     const fee = document.createElement('span');
     fee.className = 'event-card__meta-row';
-    fee.innerHTML = '<span class="event-card__meta-icon" aria-hidden="true">₹</span>';
+    fee.innerHTML = '<span class="event-card__meta-icon" aria-hidden="true">FEE</span>';
     const feeText = document.createElement('span');
-    feeText.textContent = `FEE ${formatFee(event.price_inr, event.registration_mode)}`;
+    feeText.textContent = formatFee(event.registration_fee);
     fee.append(feeText);
     metadata.append(fee);
-    const prizePool = formatPrizePool(event.prize_pool);
-    if (prizePool) {
+    const prizes = eventPrizes(event);
+    if (prizes.length) {
       const prize = document.createElement('span');
       prize.className = 'event-card__meta-row event-card__meta-row--prize';
       prize.innerHTML = '<span class="event-card__meta-icon" aria-hidden="true">✦</span>';
       const prizeText = document.createElement('span');
-      prizeText.textContent = `PRIZE POOL ${prizePool}`;
+      prizeText.textContent = `PRIZES ${prizes.join(' · ')}`;
       prize.append(prizeText);
       metadata.append(prize);
+    }
+    const dateText = formatEventDates(event);
+    if (dateText) {
+      const date = document.createElement('span');
+      date.className = 'event-card__meta-row';
+      date.textContent = dateText;
+      metadata.append(date);
     }
 
     const arrow = document.createElement('span');
@@ -175,7 +192,9 @@
     registration.className = 'event-card__register';
     registration.dataset.eventRegister = '';
     registration.dataset.registrationState = event.registration_state;
-    registration.textContent = registrationLabels[event.registration_state] || 'Registration status unavailable';
+    registration.textContent = event.registration_state === 'open' && event.department_id === 'udbhava'
+      ? 'Spot Registration'
+      : registrationLabels[event.registration_state] || 'Registration status unavailable';
     if (event.registration_state === 'open') {
       registration.href = `/register/${encodeURIComponent(event.slug)}`;
       registration.setAttribute('aria-label', `Register for ${event.name}`);
@@ -194,7 +213,7 @@
     if (!list.length) {
       const empty = document.createElement('p');
       empty.className = 'empty-state';
-      empty.textContent = searchQuery ? `No events match “${searchQuery}”. Try another search or change the filters.` : 'No events match this registration filter.';
+      empty.textContent = searchQuery ? `No events match “${searchQuery}”. Try another search or change the filters.` : 'No events match this event type.';
       eventGrid.append(empty);
       return;
     }
@@ -205,11 +224,15 @@
     returnFocus = trigger;
     const department = getDepartment(event.department_id);
     const kicker = document.getElementById('dialog-kicker');
-    kicker.textContent = `${department?.code || event.department_id.toUpperCase()} / ${modes[event.registration_mode] || 'EVENT'}`;
+    kicker.textContent = `${department?.code || event.department_id.toUpperCase()} / ${event.event_competition || 'EVENT'}`;
     document.getElementById('dialog-title').textContent = event.name;
-    document.getElementById('dialog-subtitle').hidden = true;
+    const subtitle = document.getElementById('dialog-subtitle');
+    subtitle.textContent = formatEventDates(event);
+    subtitle.hidden = !subtitle.textContent;
     document.getElementById('dialog-tagline').hidden = true;
-    document.getElementById('dialog-description').hidden = true;
+    const description = document.getElementById('dialog-description');
+    description.textContent = event.description || '';
+    description.hidden = !description.textContent;
     const facts = document.getElementById('dialog-facts');
     facts.replaceChildren();
     const addFact = (label, value) => {
@@ -224,23 +247,33 @@
       facts.append(fact);
     };
     addFact('DEPARTMENT', department?.code || event.department_id.toUpperCase());
-    addFact('REGISTRATION', modes[event.registration_mode] || 'To be announced');
-    addFact('FEE BASIS', event.fee_basis || 'Not specified');
-    addFact('FEE', formatFee(event.price_inr, event.registration_mode));
-    document.getElementById('dialog-prizes-section').hidden = true;
+    addFact('EVENT', event.event_competition);
+    addFact('FEE', formatFee(event.registration_fee));
+    addFact('VENUE', event.venue);
+    addFact('CONTACT', event.contact_numbers);
+    if (event.department_id === 'udbhava') addFact('REGISTRATION', 'Spot registration. Any fee is collected at the registration spot.');
+    else if (eventType(event) === 'competitions') addFact('REGISTRATION', 'Online and spot registration available.');
+    const prizesSection = document.getElementById('dialog-prizes-section');
+    const prizesList = document.getElementById('dialog-prizes');
+    prizesList.replaceChildren(...eventPrizes(event).map(prize => {
+      const item = document.createElement('li');
+      item.textContent = prize;
+      return item;
+    }));
+    prizesSection.hidden = prizesList.childElementCount === 0;
     document.getElementById('dialog-rules-section').hidden = true;
     const registration = document.getElementById('dialog-registration');
     const registerButton = document.getElementById('dialog-register-button');
-    registration.textContent = event.registration_state === 'closed'
-      ? 'Registration is closed for this event.'
-      : event.registration_state === 'opens-soon'
-        ? 'Registration opens soon. Check back for updates.'
-        : event.registration_mode === 'on_spot'
-          ? 'Registration is open at the event venue.'
-          : 'Registration is open. Complete the form to reserve your place.';
-    const canRegisterOnline = event.registration_state === 'open' && event.registration_mode !== 'on_spot';
-    registerButton.hidden = !canRegisterOnline;
-    if (canRegisterOnline) registerButton.href = `/register/${encodeURIComponent(event.slug)}`;
+    registration.textContent = event.department_id === 'udbhava' && event.registration_state === 'open'
+      ? 'Spot registration is available. Any fee is collected at the registration spot.'
+      : event.registration_state === 'open'
+      ? 'Registration is open. Complete the form to reserve your place.'
+      : event.registration_state === 'closed'
+        ? 'Registration is closed for this event.'
+        : 'Registration is unavailable for this event.';
+    const canRegister = event.registration_state === 'open';
+    registerButton.hidden = !canRegister;
+    if (canRegister) registerButton.href = `/register/${encodeURIComponent(event.slug)}`;
     if (!dialog.open) dialog.showModal();
     dialogClose.focus();
   }
@@ -272,6 +305,14 @@
         throw new Error('The server returned an invalid event list.');
       }
       events = payload.events;
+      categoryFilter.replaceChildren(
+        new Option('All event types', 'all'),
+        new Option('Workshops', 'workshops'),
+        new Option('Lectures', 'lectures'),
+        new Option('Shows', 'shows'),
+        new Option('Competitions', 'competitions')
+      );
+      categoryFilter.value = selectedCompetition;
       renderDepartments();
       renderEvents();
     } catch (error) {
@@ -295,12 +336,12 @@
   departmentTabs.addEventListener('click', event => {
     const button = event.target.closest('[data-department]');
     if (!button) return;
-    selectedDepartment = button.dataset.department;
-    for (const tab of departmentTabs.querySelectorAll('[data-department]')) tab.setAttribute('aria-pressed', String(tab === button));
+    selectedDepartment = selectedDepartment === button.dataset.department ? 'all' : button.dataset.department;
+    for (const tab of departmentTabs.querySelectorAll('[data-department]')) tab.setAttribute('aria-pressed', String(tab.dataset.department === selectedDepartment));
     renderEvents();
   });
   categoryFilter.addEventListener('change', () => {
-    selectedMode = categoryFilter.value;
+    selectedCompetition = categoryFilter.value;
     renderEvents();
   });
   eventSearch.addEventListener('input', () => {

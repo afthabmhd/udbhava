@@ -5,10 +5,10 @@
   "regions": ["bom1"],
   "functions": {
     "api/events.py": {
-      "includeFiles": "Events.csv"
+      "includeFiles": "udbhava_events.csv"
     },
     "api/register.py": {
-      "includeFiles": "Events.csv"
+      "includeFiles": "udbhava_events.csv"
     }
   },
   "rewrites": [

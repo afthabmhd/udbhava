@@ -19,15 +19,17 @@ import server
 def event_csv_fixture(path: Path) -> tuple[str, str, str]:
     with service.EVENTS_CSV.open("r", encoding="utf-8-sig", newline="") as source:
         rows = list(csv.DictReader(source))
-    paid = next(row for row in rows if row["registration_mode"] == "paid_online" and row["slug"] not in service.REGISTRATION_CLOSED)
-    free = next(row for row in rows if row["registration_mode"] == "free_online")
-    spot = next(row for row in rows if row["registration_mode"] == "on_spot")
-    paid["is_open"] = free["is_open"] = spot["is_open"] = "True"
     with path.open("w", encoding="utf-8", newline="") as output:
         writer = csv.DictWriter(output, fieldnames=service.CSV_HEADERS)
         writer.writeheader()
         writer.writerows(rows)
-    return paid["slug"], free["slug"], spot["slug"]
+    parsed = []
+    for row in rows:
+        parsed.append((row, service.event_requires_payment({"registration_fee": service._available(row["Registration Fee"])})))
+    paid = next(row for row, chargeable in parsed if chargeable and row["Registration State"].lower() == "open")
+    free = next(row for row, chargeable in parsed if not chargeable and row["Registration State"].lower() == "open")
+    closed = next(row for row in rows if row["Registration State"].lower() == "closed")
+    return paid["slug"], free["slug"], closed["slug"]
 
 
 class RegistrationServerTests(unittest.TestCase):
@@ -40,8 +42,8 @@ class RegistrationServerTests(unittest.TestCase):
         cls.environment.start()
         cls.temporary = tempfile.TemporaryDirectory()
         temp_root = Path(cls.temporary.name)
-        cls.events_fixture = temp_root / "Events.csv"
-        cls.paid_slug, cls.free_slug, cls.spot_slug = event_csv_fixture(cls.events_fixture)
+        cls.events_fixture = temp_root / "udbhava_events.csv"
+        cls.paid_slug, cls.free_slug, cls.closed_slug = event_csv_fixture(cls.events_fixture)
         service.EVENTS_CSV = cls.events_fixture
         cls.database_stub = []
         cls.real_insert = service.insert_registration
@@ -104,15 +106,16 @@ class RegistrationServerTests(unittest.TestCase):
             "slug": event_slug, "name": "Asha Nair", "college": "SNGCET",
             "phone": "+919876543210", "college_reg_no": "SNG23CS001", "website": "",
         }
-        if event_slug not in {self.free_slug, self.spot_slug}:
+        event = service.events_by_slug()[event_slug]
+        if service.event_requires_payment(event):
             values["upi_txn_id"] = "123456789012"
         values.update(overrides)
         return values
 
-    def test_api_returns_public_fields_including_prize_pool(self):
+    def test_api_returns_mapped_public_fields_and_normalizes_n_a(self):
         status, result, headers = self.request("GET", "/api/events")
         self.assertEqual(status, 200)
-        self.assertEqual(len(result["events"]), 63)
+        self.assertEqual(len(result["events"]), 70)
         self.assertEqual(tuple(result["events"][0]), service.EVENT_FIELDS)
         serialized = json.dumps(result)
         self.assertNotIn("SUPABASE", serialized)
@@ -122,10 +125,26 @@ class RegistrationServerTests(unittest.TestCase):
         self.assertEqual(headers["Referrer-Policy"], "strict-origin-when-cross-origin")
         by_slug = {event["slug"]: event for event in result["events"]}
         self.assertEqual(by_slug[self.paid_slug]["registration_state"], "open")
-        self.assertEqual(by_slug[self.paid_slug]["prize_pool"], "7000")
-        self.assertEqual(by_slug["cse-hackathon"]["registration_state"], "closed")
-        blank_prize_slug = next(event["slug"] for event in by_slug.values() if event["prize_pool"] is None)
-        self.assertIsNone(by_slug[blank_prize_slug]["prize_pool"])
+        self.assertEqual(by_slug[self.paid_slug]["department_id"], "cse")
+        self.assertEqual(by_slug[self.paid_slug]["registration_fee"], "70")
+        self.assertEqual(by_slug[self.paid_slug]["event_dates"], ["28/10/2026"])
+        self.assertEqual(by_slug["cse-festival-of-fury"]["event_dates"], ["28/10/2026", "29/10/2026"])
+        self.assertEqual(by_slug["civil-lost-blueprint"]["event_dates"], ["28/10/2026"])
+        self.assertEqual(by_slug["cse-hackathon"]["registration_state"], "open")
+        self.assertIsNone(by_slug["eee-national-level-technical-quiz-competition"]["event_competition"])
+        self.assertEqual(by_slug["ece-robo-soccer"]["event_dates"], ["29/10/2026"])
+        self.assertEqual(by_slug["ece-robo-soccer"]["event_time"], "11:30 AM")
+        self.assertEqual(by_slug["ece-robo-soccer"]["registration_fee"], "100")
+        self.assertIn("robots will be provided", by_slug["ece-robo-soccer"]["description"])
+        self.assertIn("bring their own robot", by_slug["ads-robo-soccer"]["description"])
+        udbhava = [event for event in result["events"] if event["department_id"] == "udbhava"]
+        self.assertEqual(len(udbhava), 6)
+        self.assertEqual(sum(event["audience"] == "School Students" for event in udbhava), 4)
+        self.assertTrue(all(event["audience"] is None for event in result["events"] if event["department_id"] != "udbhava"))
+        self.assertTrue(all(event["registration_state"] == "open" for event in udbhava))
+        self.assertFalse(any(service.event_requires_payment(event) for event in udbhava))
+        for event in udbhava:
+            self.assertEqual(self.request("GET", f"/src/assets/events/{event['slug']}.webp")[0], 200)
 
     def test_vercel_production_always_uses_live_registrations(self):
         with patch.dict(os.environ, {"VERCEL_ENV": "production", "REGISTRATION_MODE": "test"}):
@@ -145,7 +164,12 @@ class RegistrationServerTests(unittest.TestCase):
         self.assertIn('src="/src/register.js?', page_text)
         for asset in ("/styles.css", "/typography.css", "/events.css", "/registration.css", "/src/site-footer.css"):
             self.assertEqual(self.request("GET", asset)[0], 200)
+        self.assertEqual(self.request("GET", f"/register/{self.closed_slug}")[0], 404)
         self.assertEqual(self.request("GET", "/register/not-a-real-event")[0], 404)
+        for event in service.load_public_events():
+            if event["department_id"] == "udbhava":
+                with self.subTest(slug=event["slug"]):
+                    self.assertEqual(self.request("GET", f"/register/{event['slug']}")[0], 200)
 
     def test_all_pages_receive_a_csp_compatible_with_fonts_and_site_assets(self):
         for path in ("/index.html", "/events.html", "/about.html", "/registration.html", f"/register/{self.paid_slug}"):
@@ -181,27 +205,62 @@ class RegistrationServerTests(unittest.TestCase):
         self.assertEqual(status, 409)
         self.assertEqual(result["field_errors"]["upi_txn_id"], "Already registered or payment already used.")
 
-    def test_free_registration_omits_upi_and_on_spot_is_rejected(self):
+    def test_free_registration_omits_upi_and_open_form_is_allowed(self):
         payload = self.valid_payload(self.free_slug)
         self.assertNotIn("upi_txn_id", payload)
         self.assertEqual(self.request("POST", "/api/register", payload)[0], 201)
-        self.assertEqual(self.request("POST", "/api/register", self.valid_payload(self.spot_slug))[0], 409)
+        self.assertEqual(self.request("POST", "/api/register", self.valid_payload(self.paid_slug))[0], 201)
 
-    def test_closed_soon_unknown_and_honeypot_states(self):
-        closed = self.valid_payload("cse-hackathon")
+    def test_udbhava_school_fields_are_optional_and_fee_is_collected_at_spot(self):
+        school_slug = "udbhava-school-idea-presentation"
+        event = service.events_by_slug()[school_slug]
+        self.assertEqual(event["department_id"], "udbhava")
+        self.assertEqual(event["registration_fee"], "FREE")
+        payload = self.valid_payload(school_slug, college="", college_reg_no="")
+        self.assertNotIn("upi_txn_id", payload)
+        status, result, _ = self.request("POST", "/api/register", payload)
+        self.assertEqual(status, 201, result)
+        self.assertEqual(self.database_stub[-1][1]["department_id"], "udbhava")
+
+    def test_udbhava_college_fee_is_spot_paid_without_online_payment_fields(self):
+        slug = "udbhava-college-idea-presentation"
+        event = service.events_by_slug()[slug]
+        self.assertEqual(event["registration_fee"], "500")
+        payload = self.valid_payload(slug)
+        self.assertNotIn("upi_txn_id", payload)
+        self.assertEqual(self.request("POST", "/api/register", payload)[0], 201)
+
+    def test_college_registration_number_accepts_letters(self):
+        payload = self.valid_payload(college_reg_no="REGISTRATIONABC")
+        status, result, _ = self.request("POST", "/api/register", payload)
+        self.assertEqual(status, 201, result)
+        self.assertEqual(self.database_stub[-1][1]["college_reg_no"], "REGISTRATIONABC")
+
+    def test_registration_state_alone_gates_submission(self):
+        closed = self.valid_payload(self.closed_slug)
         self.assertEqual(self.request("POST", "/api/register", closed)[0], 409)
         closed["website"] = "filled"
-        self.assertEqual(self.request("POST", "/api/register", closed)[0], 202)
-        self.assertEqual(self.request("POST", "/api/register", self.valid_payload("unknown-event"))[0], 404)
-        test_open = next(event for event in service.load_public_events() if event["slug"] not in service.REGISTRATION_CLOSED and event["registration_mode"] != "on_spot")
+        self.assertEqual(self.request("POST", "/api/register", closed)[0], 409)
+        unknown = {"slug": "unknown-event", "name": "Asha Nair", "college": "SNGCET", "phone": "9876543210", "college_reg_no": "SNG23CS010", "website": ""}
+        self.assertEqual(self.request("POST", "/api/register", unknown)[0], 404)
+        test_open = next(event for event in service.load_public_events() if event["registration_state"] == "open" and service.event_requires_payment(event))
         self.assertEqual(test_open["registration_state"], "open")
         self.assertEqual(self.request("POST", "/api/register", self.valid_payload(test_open["slug"]))[0], 201)
-        with patch.dict(os.environ, {"REGISTRATION_MODE": "live"}):
-            live_event = next(event for event in service.load_public_events() if event["registration_state"] == "opens-soon" and event["registration_mode"] != "on_spot")
-            self.assertEqual(self.request("POST", "/api/register", self.valid_payload(live_event["slug"]))[0], 409)
-        test_event = next(event for event in service.load_public_events() if event["slug"] == live_event["slug"])
-        self.assertEqual(test_event["registration_state"], "open")
-        self.assertEqual(self.request("POST", "/api/register", self.valid_payload(live_event["slug"], college_reg_no="SNG23CS009", upi_txn_id="123456789099"))[0], 201)
+
+    def test_n_a_registration_state_is_not_open(self):
+        with service.EVENTS_CSV.open("r", encoding="utf-8-sig", newline="") as source:
+            rows = list(csv.DictReader(source))
+        row = next(row for row in rows if row["slug"] == self.paid_slug)
+        row["Registration State"] = "n/a"
+        unavailable_fixture = self.events_fixture.with_name("n-a-state.csv")
+        with unavailable_fixture.open("w", encoding="utf-8", newline="") as output:
+            writer = csv.DictWriter(output, fieldnames=service.CSV_HEADERS)
+            writer.writeheader()
+            writer.writerows(rows)
+        with patch.object(service, "EVENTS_CSV", unavailable_fixture):
+            event = service.events_by_slug()[self.paid_slug]
+            self.assertEqual(event["registration_state"], "not-open")
+            self.assertEqual(self.request("POST", "/api/register", self.valid_payload(self.paid_slug))[0], 409)
 
     def test_input_validation_origin_body_size_and_content_type(self):
         payload = self.valid_payload()
@@ -259,6 +318,22 @@ class RegistrationServerTests(unittest.TestCase):
                 type(self).real_insert(event, values)
         self.assertTrue(request_stub.call_args.args[0].full_url.endswith("/test_registrations"))
 
+    def test_supabase_insert_saves_optional_school_fields_as_null(self):
+        class Response:
+            status = 201
+            def __enter__(self): return self
+            def __exit__(self, *args): return False
+
+        event = service.events_by_slug()["udbhava-school-debate"]
+        values = {"name": "Asha Nair", "college": "", "phone": "9876543210", "college_reg_no": "", "upi_txn_id": ""}
+        with patch.dict(os.environ, {"SUPABASE_URL": "https://project.supabase.co", "SUPABASE_SERVICE_ROLE_KEY": "test-only-key", "REGISTRATION_MODE": "live"}):
+            with patch.object(service, "urlopen", return_value=Response()) as request_stub:
+                type(self).real_insert(event, values)
+        record = json.loads(request_stub.call_args.args[0].data)
+        self.assertEqual(record["department_id"], "udbhava")
+        self.assertIsNone(record["college"])
+        self.assertIsNone(record["college_reg_no"])
+
     def test_postgrest_unique_violation_maps_to_neutral_error(self):
         body = json.dumps({"code": "23505", "message": "duplicate key value violates unique constraint registrations_upi_txn_id_uidx"}).encode()
         error = HTTPError("https://project.supabase.co/rest/v1/registrations", 409, "conflict", {}, None)
@@ -273,10 +348,10 @@ class RegistrationServerTests(unittest.TestCase):
         self.assertIn("upi_txn_id", raised.exception.field_errors)
 
     def test_build_output_excludes_source_data_schema_and_env_files(self):
-        for blocked in ("Events.csv", "schema.sql", ".env.example", "server.py", "registration_service.py"):
+        for blocked in ("udbhava_events.csv", "schema.sql", ".env.example", "server.py", "registration_service.py"):
             self.assertFalse((build.PUBLIC / blocked).exists(), blocked)
         self.assertFalse((build.PUBLIC / "data").exists())
-        for path in ("/Events.csv", "/schema.sql", "/.env.example", "/data/test.csv"):
+        for path in ("/udbhava_events.csv", "/schema.sql", "/.env.example", "/data/test.csv"):
             self.assertEqual(self.request("GET", path)[0], 404)
 
 

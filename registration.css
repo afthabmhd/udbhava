@@ -11,7 +11,6 @@
 .registration-event-heading h2{margin:0;color:#f5f0ff;font:700 clamp(1.8rem,4.3vw,3.3rem)/1.18 var(--font-display);overflow-wrap:anywhere}
 .registration-fee{flex:0 0 auto;color:#f4eaff;font:600 clamp(1.1rem,2.4vw,1.6rem)/1.35 var(--font-body);text-align:right}
 .registration-fee small{display:block;margin-top:5px;color:#b8a8ca;font:400 12px/1.5 var(--font-body);letter-spacing:.06em}
-.registration-prize{margin:14px 0 0;color:#dfc8ff;font-size:14px;font-weight:600;letter-spacing:.05em}
 .registration-state{margin:24px 0;padding:17px 20px;border:1px solid rgba(196,157,230,.52);border-left:3px solid #bd79ff;border-radius:6px;color:#f4eaff;background:linear-gradient(100deg,rgba(83,39,122,.25),rgba(7,6,13,.75));font-size:15px;line-height:1.55}
 .registration-form{max-width:760px;margin:26px auto 0;padding:clamp(20px,4vw,38px);border:1px solid rgba(169,148,199,.36);border-radius:9px;background:linear-gradient(145deg,rgba(11,9,18,.94),rgba(5,4,9,.97));box-shadow:0 18px 70px rgba(0,0,0,.25)}
 .registration-form h3{margin:0 0 22px;color:#f3eaff;font:600 16px/1.4 var(--font-body);letter-spacing:.12em}

@@ -32,6 +32,12 @@ create table if not exists public.test_registrations (
     constraint test_registrations_status_check check (status in ('pending', 'verified', 'rejected'))
 );
 
+-- School-student registration fields are optional; apply this migration to existing projects too.
+alter table public.registrations alter column college drop not null;
+alter table public.registrations alter column college_reg_no drop not null;
+alter table public.test_registrations alter column college drop not null;
+alter table public.test_registrations alter column college_reg_no drop not null;
+
 create unique index if not exists test_registrations_upi_txn_id_uidx
     on public.test_registrations (upi_txn_id)
     where upi_txn_id is not null;

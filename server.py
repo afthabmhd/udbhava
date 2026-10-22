@@ -56,7 +56,8 @@ class SiteHandler(SimpleHTTPRequestHandler):
         if path.startswith("/register/"):
             slug = path[len("/register/"):].strip("/")
             try:
-                if not slug or "/" in slug or slug not in service.events_by_slug():
+                event = service.events_by_slug().get(slug) if slug and "/" not in slug else None
+                if event is None or event["registration_state"] != "open":
                     self._send_public_404()
                     return
             except (OSError, ValueError):
