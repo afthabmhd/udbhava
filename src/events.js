@@ -155,35 +155,30 @@
 
     const metadata = document.createElement('span');
     metadata.className = 'event-card__metadata';
-    const fee = document.createElement('span');
-    fee.className = 'event-card__meta-row';
-    fee.innerHTML = '<span class="event-card__meta-icon" aria-hidden="true">FEE</span>';
-    const feeText = document.createElement('span');
-    feeText.textContent = formatFee(event.registration_fee);
-    fee.append(feeText);
-    metadata.append(fee);
+    const appendInfoRow = (label, value, icon, className = '') => {
+      const row = document.createElement('span');
+      row.className = `event-card__info-row${className ? ` ${className}` : ''}`;
+      const symbol = document.createElement('span');
+      symbol.className = 'event-card__info-icon';
+      symbol.setAttribute('aria-hidden', 'true');
+      symbol.innerHTML = icon;
+      const content = document.createElement('span');
+      content.className = 'event-card__info-content';
+      const heading = document.createElement('span');
+      heading.className = 'event-card__info-label';
+      heading.textContent = label;
+      const detail = document.createElement('span');
+      detail.className = 'event-card__info-value';
+      detail.textContent = value;
+      content.append(heading, detail);
+      row.append(symbol, content);
+      metadata.append(row);
+    };
+    appendInfoRow('Fee', formatFee(event.registration_fee), '<svg viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="5" rx="7.5" ry="3"/><path d="M4.5 5v5c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V5M4.5 10v5c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-5M4.5 15v4c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-4"/></svg>');
     const prizes = eventPrizes(event);
-    if (prizes.length) {
-      const prize = document.createElement('span');
-      prize.className = 'event-card__meta-row event-card__meta-row--prize';
-      prize.innerHTML = '<span class="event-card__meta-icon" aria-hidden="true">✦</span>';
-      const prizeText = document.createElement('span');
-      prizeText.textContent = `PRIZES ${prizes.join(' · ')}`;
-      prize.append(prizeText);
-      metadata.append(prize);
-    }
+    if (prizes.length) appendInfoRow('Prizes', prizes.join(' · '), '<svg viewBox="0 0 24 24" fill="none"><path d="m12 2 2.3 6.7L21 11l-6.7 2.3L12 20l-2.3-6.7L3 11l6.7-2.3L12 2Z"/><path d="m19 16 .9 2.1L22 19l-2.1.9L19 22l-.9-2.1L16 19l2.1-.9L19 16Z"/></svg>', 'event-card__info-row--prize');
     const dateText = formatEventDates(event);
-    if (dateText) {
-      const date = document.createElement('span');
-      date.className = 'event-card__meta-row';
-      date.textContent = dateText;
-      metadata.append(date);
-    }
-
-    const arrow = document.createElement('span');
-    arrow.className = 'event-arrow';
-    arrow.setAttribute('aria-hidden', 'true');
-    arrow.textContent = '→';
+    if (dateText) appendInfoRow('Date & Time', dateText, '<svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M7.5 3v4M16.5 3v4M3.5 9.5h17M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01"/></svg>');
     const registration = document.createElement(event.registration_state === 'open' ? 'a' : 'button');
     if (registration instanceof HTMLButtonElement) registration.type = 'button';
     registration.className = 'event-card__register';
@@ -197,7 +192,7 @@
       registration.setAttribute('aria-label', `Register for ${event.name}`);
     } else registration.disabled = true;
 
-    detailsButton.append(top, imageFrame, copy, metadata, arrow);
+    detailsButton.append(top, imageFrame, copy, metadata);
     card.append(detailsButton, registration);
     return card;
   }
