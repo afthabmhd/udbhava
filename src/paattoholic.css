@@ -161,6 +161,21 @@
 .paattoholic-subtitle::before { background: linear-gradient(90deg, transparent, rgba(216, 67, 255, .95)); }
 .paattoholic-subtitle::after { background: linear-gradient(90deg, rgba(216, 67, 255, .95), transparent); }
 
+.paattoholic-datetime {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(9px, 1.5vw, 20px);
+  margin: clamp(8px, 1.2svh, 14px) 0 0;
+  color: rgba(237, 222, 255, .88);
+  font-size: clamp(10px, 1.05vw, 15px);
+  letter-spacing: .24em;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.paattoholic-datetime span { color: #d843ff; }
+
 .paattoholic-section.is-revealed .paattoholic-title-frame,
 .paattoholic-section.is-revealed .paattoholic-subtitle {
   opacity: 1;
@@ -209,11 +224,18 @@
     font-size: clamp(8px, 2.25vw, 11px);
     letter-spacing: .22em;
   }
+  .paattoholic-datetime {
+    gap: 8px;
+    margin-top: 9px;
+    font-size: clamp(9px, 2.5vw, 11px);
+    letter-spacing: .2em;
+  }
 }
 
 @media (max-width: 360px) {
   .paattoholic-title-frame h2 { font-size: clamp(24px, 9.6vw, 35px); }
   .paattoholic-subtitle { font-size: 7.5px; letter-spacing: .18em; }
+  .paattoholic-datetime { font-size: 8px; letter-spacing: .16em; }
 }
 
 @media (prefers-reduced-motion: reduce) {
