@@ -2,7 +2,7 @@
 *{box-sizing:border-box}
 html{background:#000;scroll-behavior:smooth;scroll-padding-top:16px}
 body{margin:0;background:#000;color:var(--white);font-family:var(--font-body)}
-#c{position:absolute;top:0;left:0;width:100%;height:auto;display:block;z-index:0;pointer-events:none;background:#000}
+#c{display:block;z-index:0;pointer-events:none;background:#000}
 main{position:relative;z-index:1}
 .hero{height:100svh;min-height:650px;position:relative;overflow:hidden;background:transparent;isolation:isolate}
 .topbar{position:absolute;z-index:3;isolation:isolate;inset:0 0 auto;height:78px;padding:0 4%;display:flex;align-items:center;justify-content:space-between;background:transparent;border:0}

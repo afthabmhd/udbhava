@@ -7,6 +7,14 @@ const ctx = canvas.getContext('2d', { alpha: false });
 const page = document.querySelector('main');
 const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
 let reduced = mq.matches;
+const IS_MOBILE = matchMedia('(pointer: coarse)').matches || innerWidth < 768;
+const MOBILE_FRAME_MS = 1000 / 30;   // idle frame cap on touch devices
+let CVH = 0;                         // canvas (viewport-sized) CSS height
+let lastScrollAt = 0;
+function computeDPR(w, h) {
+  // Backing store is now viewport-sized, so the cap is about fill cost, not page height.
+  return Math.min(window.devicePixelRatio || 1, IS_MOBILE ? 2 : 3, Math.sqrt(8000000 / (w * h)));
+}
 
 const FONT = 'ui-monospace, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", "Liberation Mono", monospace';
 const CHARS = '.:;,+-~=/*\\|()[]{}<>^_#%';
@@ -295,7 +303,10 @@ function build() {
   H = Math.max(VH, page?.scrollHeight || VH);
   // This canvas spans the document and is repainted continuously. Keep its
   // backing store within practical dimension and memory limits on long pages.
-  DPR = Math.min(window.devicePixelRatio || 1, 3, 16384 / W, 16384 / H, Math.sqrt(16000000 / (W * H)));
+  // Canvas is fixed to the viewport (with headroom on mobile for the iOS toolbar
+  // collapsing), not the whole document.
+  CVH = IS_MOBILE ? Math.ceil(innerHeight * 1.2) : innerHeight;
+  DPR = computeDPR(W, CVH);
 
   fpx = clamp(W / 165, 7, 10.5);
   const probe = document.createElement('canvas').getContext('2d');
@@ -986,10 +997,16 @@ function orient(ang, rv, left) {
 
 function sizeCanvas() {
   viewH = innerHeight;
-  canvas.width = Math.max(1, Math.round(W * DPR));
-  canvas.height = Math.max(1, Math.round(H * DPR));
-  canvas.style.width = '100%';
-  canvas.style.height = `${H}px`;
+  CVH = IS_MOBILE ? Math.ceil(innerHeight * 1.2) : innerHeight;
+  const bw = Math.max(1, Math.round(W * DPR)), bh = Math.max(1, Math.round(CVH * DPR));
+  // Reassigning width/height reallocates and clears the canvas; only do it on a real change.
+  if (canvas.width !== bw) canvas.width = bw;
+  if (canvas.height !== bh) canvas.height = bh;
+  canvas.style.position = 'fixed';
+  canvas.style.top = '0';
+  canvas.style.left = '0';
+  canvas.style.width = `${W}px`;
+  canvas.style.height = `${CVH}px`;
 }
 
 /* ───────────────────────── reveal front ───────────────────────── */
@@ -1032,15 +1049,11 @@ function render(cam, front, T, nowMs, materialization = null) {
   ctx.fillStyle = '#000';
   // The canvas scrolls with the document. Clear only the world-space slice
   // visible through the viewport, leaving the rest ready to move with the page.
-  const scrollBleed = cellH * 2;
-  const scrollOffset = viewH * .025;
-  const clearTop = Math.max(0, cam - scrollOffset - scrollBleed);
-  const clearBottom = Math.min(H, cam + viewH - scrollOffset + scrollBleed);
-  ctx.fillRect(0, clearTop * DPR, canvas.width, Math.max(0, clearBottom - clearTop) * DPR);
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.globalCompositeOperation = 'lighter';
 
   const r0 = Math.max(0, Math.floor((cam - cellH * 2) / cellH));
-  const r1 = Math.min(rows - 1, Math.ceil((cam + viewH) / cellH + 2));
+  const r1 = Math.min(rows - 1, Math.ceil((cam + CVH) / cellH + 2));
   const i0 = rowStart[r0], i1 = rowStart[r1 + 1];
 
   let pulseOn = false;
@@ -1121,7 +1134,7 @@ function render(cam, front, T, nowMs, materialization = null) {
     const hi = h <= 0 ? 0 : h >= 1 ? hq1 : (h * hq1 + 0.5) | 0;
     const sc = SC[i], dw = sw * sc, dh = sh * sc;
     const x = Math.round(GX[i] * dpr - dw * 0.5);
-    const y = Math.round((GY[i] + viewH * 0.025) * dpr - dh * 0.5);
+    const y = Math.round((GY[i] + viewH * 0.025 - cam) * dpr - dh * 0.5);
     ctx.globalAlpha = a;
     ctx.drawImage(atl, (bi * HQ + hi) * sw, CH[i] * sh, sw, sh, x, y, dw, dh);
   }
@@ -1137,8 +1150,13 @@ function render(cam, front, T, nowMs, materialization = null) {
 }
 
 /* ───────────────────────── loop ───────────────────────── */
-let raf = 0;
+let raf = 0, lastFrameAt = 0;
 function loop(now) {
+  raf = requestAnimationFrame(loop);
+  // Touch devices: cap to ~30fps when the page is idle. While scrolling, render every
+  // frame so the fixed canvas stays in step with the content.
+  if (IS_MOBILE && now - lastScrollAt > 150 && now - lastFrameAt < MOBILE_FRAME_MS - 2) return;
+  lastFrameAt = now;
   const cam = window.scrollY || window.pageYOffset || 0;
   // The visible hero is filled well before the reveal front reaches its offscreen tail.
   if (!autoRevealComplete && (autoSkip || now >= autoStart + AUTO_DELAY + AUTO_DUR * 0.54)) {
@@ -1178,7 +1196,6 @@ function loop(now) {
     window.dispatchEvent(new Event('udbhava:soccer-nebula-ready'));
   }
   render(cam, front, now / 1000, now, paattoholicMaterializationAt(now));
-  raf = requestAnimationFrame(loop);
 }
 function drawStatic() {
   const cam = window.scrollY || 0;
@@ -1202,12 +1219,17 @@ let rt = 0;
 function scheduleWorldRebuild() {
   clearTimeout(rt);
   rt = setTimeout(() => {
-    const dprNow = Math.min(window.devicePixelRatio || 1, 3);
+    const dprNow = computeDPR(W, CVH || innerHeight);
     // All world-space positions, section bounds, and glyph rows are measured
     // from the same viewport dimensions. Updating only the fixed canvas height
     // left the robot/shock bounds in the old coordinate system after small
     // viewport changes (notably mobile browser chrome expanding/collapsing).
-    const viewportChanged = Math.abs(innerWidth - W) > 1 || Math.abs(innerHeight - VH) > 1;
+    // On touch devices innerHeight changes by ~60-90px every time Safari's toolbar
+    // collapses while scrolling. That must NOT trigger a full world rebuild, so only
+    // rebuild on width change or a large height change (rotation, keyboard excluded).
+    const heightDelta = Math.abs(innerHeight - VH);
+    const viewportChanged = Math.abs(innerWidth - W) > 1 ||
+      (IS_MOBILE ? heightDelta > VH * 0.3 : heightDelta > 1);
     const pixelRatioChanged = dprNow !== DPR;
     if (viewportChanged || pixelRatioChanged) build();
     else sizeCanvas();
@@ -1236,6 +1258,7 @@ addEventListener('hashchange', () => {
   if (location.hash && location.hash !== '#home') scrollRevealStarted = true;
 });
 addEventListener('scroll', () => {
+  lastScrollAt = performance.now();
   const cam = window.scrollY || window.pageYOffset || 0;
   // Ignore browser anchor/restoration scroll events during the home intro.
   if (cam > 0 && (scrollIntent || (location.hash && location.hash !== '#home'))) scrollRevealStarted = true;
