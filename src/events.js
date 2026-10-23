@@ -33,6 +33,7 @@
   let selectedCompetition = new URLSearchParams(window.location.search).get('category') || 'all';
   if (!eventTypes.includes(selectedCompetition)) selectedCompetition = 'all';
   let searchQuery = '';
+  let searchTimer = 0;
   let returnFocus = null;
 
   function getDepartment(id) {
@@ -338,7 +339,8 @@
   });
   eventSearch.addEventListener('input', () => {
     searchQuery = eventSearch.value;
-    renderEvents();
+    window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(renderEvents, 150);
   });
   eventGrid.addEventListener('click', event => {
     if (event.target.closest('[data-retry]')) {
