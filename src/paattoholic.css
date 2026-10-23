@@ -2,7 +2,7 @@
   position: relative;
   z-index: 1;
   min-height: 100svh;
-  overflow: hidden;
+  overflow: visible;
   color: #f7f4ff;
   font-family: var(--font-body);
   background: transparent;
@@ -13,7 +13,7 @@
   z-index: 1;
   inset: 0 0 auto;
   height: 100svh;
-  overflow: hidden;
+  overflow: visible;
   pointer-events: none;
 }
 
@@ -31,7 +31,7 @@
   --hand-x: 8.7%;
   --hand-y: 44%;
   top: 0;
-  left: 50%;
+  left: calc(50% - 50svh);
   display: block;
   height: 150svh;
   width: auto;
@@ -40,36 +40,24 @@
   object-position: center top;
   -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 61%, transparent 68%);
   mask-image: linear-gradient(to bottom, #000 0%, #000 61%, transparent 68%);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
   opacity: 0;
-  transform: translate3d(-50%, 0, 0);
+  transform: none;
   transform-origin: center top;
   mix-blend-mode: screen;
   transition: none;
   user-select: none;
 }
 
-.paattoholic-reveal {
-  position: absolute;
-  z-index: 2;
-  top: 0;
-  left: 50%;
-  width: auto;
-  height: 150svh;
-  object-fit: contain;
-  object-position: center top;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 61%, transparent 68%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 61%, transparent 68%);
-  opacity: 0;
-  transform: translateX(-50%);
-  mix-blend-mode: screen;
-  transition: none;
-  pointer-events: none;
-}
-
-.paattoholic-section.is-materializing .paattoholic-reveal { opacity: 1; }
-.paattoholic-section.is-materializing .paattoholic-performer { opacity: 0; }
-.paattoholic-section.is-materialized .paattoholic-reveal { opacity: 0; }
 .paattoholic-section.is-materialized .paattoholic-performer { opacity: 1; }
+
+.paattoholic-section.is-particle-revealing .paattoholic-performer {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
 
 .paattoholic-title-group {
   position: absolute;
@@ -188,19 +176,14 @@
   .paattoholic-section { min-height: auto; display: flex; flex-direction: column; padding-bottom: 7svh; }
   .paattoholic-performer-window { height: 100vw; }
   .paattoholic-performer {
-    left: 50%;
+    left: 0;
     width: 100vw;
     height: auto;
-    transform: translateX(-50%);
+    transform: none;
     object-fit: contain;
     -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 70%);
     mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 70%);
     --hand-y: 44%;
-  }
-  .paattoholic-reveal {
-    left: 50%; width: 100vw; height: auto; transform: translateX(-50%);
-    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 70%);
-    mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 70%);
   }
   .paattoholic-title-group {
     position: relative;
@@ -240,15 +223,12 @@
 
 @media (prefers-reduced-motion: reduce) {
   .paattoholic-performer,
-  .paattoholic-reveal,
   .paattoholic-title-frame,
   .paattoholic-subtitle {
     opacity: 1;
     transform: none;
     transition: none;
   }
-  .paattoholic-performer { transform: translateX(-50%); }
-  .paattoholic-reveal { display: none; }
   .paattoholic-title-frame,
   .paattoholic-subtitle { clip-path: none; filter: none; }
 }

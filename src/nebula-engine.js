@@ -1052,7 +1052,7 @@ function targetFront(cam, nowMs) {
 const PI_ = new Float32Array(12);
 function paattoholicMaterializationAt(nowMs) {
   if (paattoholicMaterializationStartedAt === null || !paattoholicBounds) return null;
-  const progress = clamp((nowMs - paattoholicMaterializationStartedAt) / 5200, 0, 1);
+  const progress = clamp((nowMs - paattoholicMaterializationStartedAt) / 3800, 0, 1);
   return {
     progress,
     reach: .015 + .985 * smooth(0, .29, progress),
