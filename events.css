@@ -162,4 +162,14 @@
 .events-body .site-footer__brand small{font-size:11px}
 .events-body .site-footer__motto{font-size:10px}
 .events-body .site-footer__links a,.events-body .site-footer__top{font-size:10px}
+
+@media(pointer:coarse){
+.events-topbar{-webkit-backdrop-filter:none;backdrop-filter:none}
+.event-dialog::backdrop{-webkit-backdrop-filter:none;backdrop-filter:none}
+.department-tab__logo,.event-art{filter:none}
+.department-tab__logo{transition:transform .2s}
+.department-tab,.event-card,.dialog-register-button{transition:transform .2s,opacity .2s}
+.event-card:hover,.event-card:focus-within{box-shadow:none}
+.dialog-register-button:hover{box-shadow:0 0 22px rgba(156,75,255,.22)}
+}
 .events-body .site-footer__bottom{font-size:8px}

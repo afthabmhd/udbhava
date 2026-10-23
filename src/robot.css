@@ -167,3 +167,7 @@
   .robot-content h2,.robot-finish,.robot-stage figcaption,
   .robot-stage-cross,.robot-coordinates { opacity: 1; }
 }
+
+@media (pointer: coarse) {
+  .robot-vehicle { filter: none; }
+}

@@ -171,3 +171,9 @@
 @media (prefers-reduced-motion: reduce) {
   .shock-section *, .shock-section *::before, .shock-section *::after { animation: none !important; }
 }
+
+@media (pointer: coarse) {
+  .shock-coil-frame { filter: none; }
+  .shock-terminal,
+  .shock-readout i { box-shadow: none; }
+}

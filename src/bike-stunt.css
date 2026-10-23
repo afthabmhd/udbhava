@@ -120,7 +120,6 @@
   --bike-end-x: 0px;
   transform: translate3d(var(--bike-end-x), 0, 0) rotate(-8deg);
   transform-origin: 55% 55%;
-  will-change: transform, opacity;
   filter: brightness(1.65) drop-shadow(0 0 20px rgba(129, 48, 255, .48));
   pointer-events: none;
 }
@@ -134,6 +133,8 @@
   visibility: visible;
   animation: bike-stunt-jump .54s linear both;
 }
+
+.bike-stunt-section.jump-animating .bike-stunt-rider { will-change: transform, opacity; }
 
 .bike-stunt-section.text-ready .bike-stunt-copy {
   opacity: 1;
@@ -184,4 +185,10 @@
   .bike-stunt-copy { opacity: 1; transform: none; }
   .bike-stunt-ramp-crowd { opacity: .94; transform: translateX(-50%); }
   .bike-stunt-rider { opacity: 1; visibility: visible; transform: translate3d(var(--bike-end-x), 0, 0) rotate(-8deg); }
+}
+
+@media (pointer: coarse) {
+  .bike-stunt-copy::before { filter: none; }
+  .bike-stunt-ramp-crowd { filter: none; }
+  .bike-stunt-rider { filter: none; }
 }

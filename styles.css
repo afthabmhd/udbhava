@@ -37,3 +37,8 @@ main{position:relative;z-index:1}
 }
 @media(max-height:740px) and (max-width:700px){.hero{min-height:620px}.bottom-left{bottom:9%}.scroll-cue{bottom:2%}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important;animation:none!important}}
+
+@media (pointer: coarse) {
+  .topbar::before { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .scroll-cue i::after { filter: none; }
+}

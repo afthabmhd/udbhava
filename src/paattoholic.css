@@ -252,3 +252,14 @@
   .paattoholic-title-frame,
   .paattoholic-subtitle { clip-path: none; filter: none; }
 }
+
+@media (pointer: coarse) {
+  .paattoholic-title-group::before { filter: none; }
+  .paattoholic-title-frame,
+  .paattoholic-subtitle { filter: none; clip-path: none; }
+}
+
+@media (pointer: coarse) and (prefers-reduced-motion: no-preference) {
+  .paattoholic-title-frame,
+  .paattoholic-subtitle { transition: opacity .3s ease, transform .3s ease; }
+}

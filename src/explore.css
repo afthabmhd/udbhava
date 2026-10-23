@@ -194,6 +194,19 @@
   .explore-card:focus-visible .card-icon { transform: scale(1.1); filter: drop-shadow(0 0 13px var(--card-glow)); }
 }
 
+@media (pointer: coarse) {
+  .explore-card { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .explore-card::before,
+  .card-icon { filter: none; }
+  .explore-card:hover .card-icon,
+  .explore-card:focus-visible .card-icon { filter: none; }
+  .explore-card { transition: transform 650ms cubic-bezier(.2,.7,.2,1), opacity 650ms ease; }
+  .card-icon { transition: transform 300ms ease; }
+  .card-rule { box-shadow: none; }
+  .explore-card:hover,
+  .explore-card:focus-visible { filter: none; }
+}
+
 @media (max-width: 900px) {
   .explore-section { min-height: auto; padding: 12svh 6vw 7svh; }
   .explore-heading { padding: 17px 13px; }

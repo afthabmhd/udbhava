@@ -152,6 +152,7 @@
   function startLoop() {
     if (loopStarted || reducedMotion) return;
     loopStarted = true;
+    section.classList.toggle('motion-active', inView);
     section.classList.add('match-active');
     if (inView && !document.hidden) {
       previousFrame = null;
@@ -172,6 +173,8 @@
       section.classList.add('match-active');
       return;
     }
+
+    section.classList.add('motion-active');
 
     const entrances = robots.map((robot, index) => {
       const finalPose = botTransform(robot);
@@ -213,6 +216,7 @@
 
   const visibilityObserver = new IntersectionObserver(entries => {
     inView = entries.some(entry => entry.isIntersecting);
+    section.classList.toggle('motion-active', inView && !document.hidden && !reducedMotion);
     if (inView) resumeLoop();
     else if (frameRequest) {
       cancelAnimationFrame(frameRequest);
@@ -235,6 +239,7 @@
       cancelAnimationFrame(frameRequest);
       frameRequest = 0;
       previousFrame = null;
+      section.classList.remove('motion-active');
     } else if (!document.hidden) resumeLoop();
   });
   measureArena();

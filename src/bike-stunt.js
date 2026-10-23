@@ -24,8 +24,10 @@
       if (event && event.animationName !== 'bike-stunt-jump') return;
       rider.removeEventListener('animationend', finishJump);
       clearTimeout(fallback);
+      section.classList.remove('jump-animating');
       revealCopy();
     };
+    section.classList.add('jump-animating');
     const fallback = window.setTimeout(() => finishJump(), 1150);
     rider.addEventListener('animationend', finishJump);
     requestAnimationFrame(() => requestAnimationFrame(() => section.classList.add('jump-ready')));

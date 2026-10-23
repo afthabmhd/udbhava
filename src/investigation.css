@@ -302,3 +302,23 @@
   .connection { opacity: .62; stroke-dasharray: none !important; stroke-dashoffset: 0 !important; transition: none !important; }
   .evidence-node,.node-focus,.evidence-focus-marker { opacity: 1; transform: none; transition: none; }
 }
+
+@media (pointer: coarse) {
+  .connection { stroke-dasharray: none !important; stroke-dashoffset: 0 !important; transition: opacity 180ms ease; }
+  .grid-line { stroke-dasharray: none; }
+  .evidence-item { clip-path: none; transform: translateY(6px); }
+  .evidence-item.is-decoded { transform: none; }
+  .evidence-item,
+  .evidence-fingerprint { box-shadow: inset 0 0 0 1px rgba(17,15,23,.9); }
+  .evidence-image,
+  .evidence-fingerprint .evidence-image,
+  .fingerprint-glow,
+  .node-focus { filter: none; }
+  .evidence-focus-marker { box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); }
+  .evidence-focus-marker::after { box-shadow: none; }
+}
+
+@media (pointer: coarse) and (prefers-reduced-motion: no-preference) {
+  .connection { transition: opacity 180ms ease; }
+  .evidence-item { transition: opacity 300ms ease, transform 300ms ease; }
+}
