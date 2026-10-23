@@ -4,6 +4,19 @@
 /* ───────────────────────── setup ───────────────────────── */
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d', { alpha: false });
+// The canvas is moved around inside a clip box that ends where <main> ends. A transformed
+// canvas that pokes past the bottom of the page would otherwise add blank scrollable
+// space below the footer.
+const clipBox = document.createElement('div');
+clipBox.setAttribute('aria-hidden', 'true');
+clipBox.style.cssText = 'position:absolute;top:0;left:0;width:100%;overflow:hidden;pointer-events:none;z-index:0;contain:strict;';
+canvas.parentNode.insertBefore(clipBox, canvas);
+clipBox.appendChild(canvas);
+function updateClipBox() {
+  const sy = window.scrollY || 0;
+  const mainBottom = page ? Math.round(page.getBoundingClientRect().bottom + sy) : H;
+  clipBox.style.height = `${Math.max(1, Math.min(H, mainBottom))}px`;
+}
 const page = document.querySelector('main');
 const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
 let reduced = mq.matches;
@@ -1012,6 +1025,7 @@ function sizeCanvas() {
   canvas.style.width = `${W}px`;
   canvas.style.height = `${CVH}px`;
   canvas.style.willChange = 'transform';
+  updateClipBox();
   winTop = -1e9;               // force re-centre on next frame
   needFullClear = true;
   placeWindow(window.scrollY || 0);
