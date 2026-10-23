@@ -25,7 +25,7 @@
   function feeCaption(value) {
     if (!value) return 'Fee not available';
     const fee = String(value).trim();
-    return /^(free|free entry|nil)$/i.test(fee) || fee.startsWith('₹') ? fee : `₹${fee}`;
+    return /^(free\b|nil\b)/i.test(fee) || fee.startsWith('₹') ? fee : `₹${fee}`;
   }
 
   function requiresPayment(event) {
