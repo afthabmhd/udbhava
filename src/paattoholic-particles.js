@@ -105,8 +105,7 @@ export function particleReveal(img, opts = {}) {
   img.style.transition = `opacity ${o.fade}ms ease`;
   let raf;
 
-  function frame(now) {
-    const t = (now - t0) / o.duration;       // 0..1+ over the wave
+  function render(t) {
     ctx.clearRect(0, 0, cv.width, cv.height);
     let settled = 0;
     for (const p of P) {
@@ -125,7 +124,18 @@ export function particleReveal(img, opts = {}) {
       ctx.drawImage(s, padX + x * k - s.cssSize / 2, padY + y * k - s.cssSize / 2, s.cssSize, s.cssSize);
     }
     ctx.globalAlpha = 1;
-    if (settled >= P.length * 0.995 || t > 1.6) return finish();
+    return settled;
+  }
+
+  function frame(now) {
+    const t = (now - t0) / o.duration;       // 0..1+ over the wave
+    const settled = render(t);
+    if (settled >= P.length * 0.995 || t > 1.6) {
+      // Frame throttling can jump past the last eased frame. Paint the fully
+      // settled particle positions before beginning the crossfade.
+      render(1.6);
+      return finish();
+    }
     raf = requestAnimationFrame(frame);
   }
 

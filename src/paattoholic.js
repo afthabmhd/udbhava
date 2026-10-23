@@ -41,8 +41,6 @@ import { particleReveal } from './paattoholic-particles.js';
         return;
       }
       section.classList.add('is-particle-revealing');
-      // The engine listens for this event to begin its matching PAATTOHOLIC pulse.
-      window.dispatchEvent(new Event('udbhava:paattoholic-materialization-start'));
       const reveal = particleReveal(image, {
         from: 'below',
         duration: 3800,
@@ -50,6 +48,9 @@ import { particleReveal } from './paattoholic-particles.js';
         onDone: showFinalFrame,
       });
       cancelReveal = reveal.cancel;
+      // particleReveal has now sampled the PNG and built its arrival map. Start the
+      // matching nebula clock only after that preparation has completed.
+      window.dispatchEvent(new Event('udbhava:paattoholic-materialization-start'));
     };
 
     if (image.complete) {
