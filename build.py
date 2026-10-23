@@ -13,12 +13,24 @@ ROOT_FILES = (
     "styles.css", "events.css", "about.css", "typography.css", "registration.css",
     "favicon.ico", "favicon.png",
 )
+SOURCE_ONLY_ASSETS = {
+    "a.png",
+    "bike-stunt-ramp-crowd.png",
+    "bike-stunt-rider.png",
+    "line-following-robot-cutout.png",
+    "paattoholic-artist.png",
+    "robot-soccer-ball.png",
+    "robot-soccer-unit.png",
+    "tesla-coil-platform.png",
+}
 
 
 def _copy_source_tree(source: Path, destination: Path) -> None:
     destination.mkdir(parents=True, exist_ok=True)
     for path in source.iterdir():
         if path.name.startswith(".") or path.name == "data" or path.suffix.lower() == ".map":
+            continue
+        if source == ROOT / "src" / "assets" and path.name in SOURCE_ONLY_ASSETS:
             continue
         # Serve the optimized derivatives from src/assets/events, not the large source uploads.
         if source == ROOT / "src" and path.is_dir() and path.name == "Cards":
