@@ -9,7 +9,9 @@ const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
 let reduced = mq.matches;
 const IS_MOBILE = matchMedia('(pointer: coarse)').matches || innerWidth < 768;
 const MOBILE_FRAME_MS = 1000 / 30;   // idle frame cap on touch devices
-let CVH = 0;                         // canvas (viewport-sized) CSS height
+let CVH = 0;                         // canvas window CSS height (~2 viewports)
+let winTop = 0;                      // document Y of the canvas window's top edge
+let needFullClear = true;
 let lastScrollAt = 0;
 function computeDPR(w, h) {
   // Backing store is now viewport-sized, so the cap is about fill cost, not page height.
@@ -152,6 +154,7 @@ function buildAtlas() {
 }
 
 function build() {
+  builtSignature = layoutSignature();
   W = innerWidth; VH = innerHeight; viewH = VH;
   const investigationSection = document.querySelector('.investigation-section');
   const robotSection = document.querySelector('.robot-section');
@@ -303,9 +306,10 @@ function build() {
   H = Math.max(VH, page?.scrollHeight || VH);
   // This canvas spans the document and is repainted continuously. Keep its
   // backing store within practical dimension and memory limits on long pages.
-  // Canvas is fixed to the viewport (with headroom on mobile for the iOS toolbar
-  // collapsing), not the whole document.
-  CVH = IS_MOBILE ? Math.ceil(innerHeight * 1.2) : innerHeight;
+  // The canvas is a ~2-viewport WINDOW into the document. It scrolls natively with
+  // the page (so it can never drift against the content) and is re-centred only when
+  // the viewport nears its edge. Much smaller than a document-height canvas.
+  CVH = Math.min(Math.ceil(innerHeight * 2), H);
   DPR = computeDPR(W, CVH);
 
   fpx = clamp(W / 165, 7, 10.5);
@@ -997,16 +1001,36 @@ function orient(ang, rv, left) {
 
 function sizeCanvas() {
   viewH = innerHeight;
-  CVH = IS_MOBILE ? Math.ceil(innerHeight * 1.2) : innerHeight;
+  CVH = Math.min(Math.ceil(innerHeight * 2), H);
   const bw = Math.max(1, Math.round(W * DPR)), bh = Math.max(1, Math.round(CVH * DPR));
   // Reassigning width/height reallocates and clears the canvas; only do it on a real change.
   if (canvas.width !== bw) canvas.width = bw;
   if (canvas.height !== bh) canvas.height = bh;
-  canvas.style.position = 'fixed';
+  canvas.style.position = 'absolute';
   canvas.style.top = '0';
   canvas.style.left = '0';
   canvas.style.width = `${W}px`;
   canvas.style.height = `${CVH}px`;
+  canvas.style.willChange = 'transform';
+  winTop = -1e9;               // force re-centre on next frame
+  needFullClear = true;
+  placeWindow(window.scrollY || 0);
+}
+
+// Keep [cam, cam + 1.2*vh] comfortably inside the canvas window. Moving the window is
+// just a transform change + a clear; the visible slice is redrawn in the same frame.
+function placeWindow(cam) {
+  const vh = Math.max(viewH, innerHeight);
+  const maxTop = Math.max(0, H - CVH);
+  const slack = vh * 0.15;
+  const nearTop = winTop > 0 && cam - winTop < slack;
+  const nearBottom = winTop < maxTop && (winTop + CVH) - (cam + vh * 1.2) < slack;
+  if (winTop >= 0 && !nearTop && !nearBottom) return;
+  const next = clamp(Math.round(cam - vh * 0.4), 0, maxTop);
+  if (next === winTop) return;
+  winTop = next;
+  canvas.style.transform = `translate3d(0,${winTop}px,0)`;
+  needFullClear = true;
 }
 
 /* ───────────────────────── reveal front ───────────────────────── */
@@ -1049,11 +1073,23 @@ function render(cam, front, T, nowMs, materialization = null) {
   ctx.fillStyle = '#000';
   // The canvas scrolls with the document. Clear only the world-space slice
   // visible through the viewport, leaving the rest ready to move with the page.
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  placeWindow(cam);
+  const vis = Math.max(viewH, innerHeight);
+  const bleed = vis * 0.15;
+  if (needFullClear) {
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    needFullClear = false;
+  } else {
+    // Repaint only the slice around the viewport; the rest of the window keeps its
+    // last pixels and scrolls with the page.
+    const cTop = Math.max(0, cam - winTop - bleed - cellH * 2);
+    const cBot = Math.min(CVH, cam - winTop + vis + bleed + cellH * 2);
+    ctx.fillRect(0, cTop * DPR, canvas.width, Math.max(0, cBot - cTop) * DPR);
+  }
   ctx.globalCompositeOperation = 'lighter';
 
-  const r0 = Math.max(0, Math.floor((cam - cellH * 2) / cellH));
-  const r1 = Math.min(rows - 1, Math.ceil((cam + CVH) / cellH + 2));
+  const r0 = Math.max(0, Math.floor((cam - bleed - cellH * 2) / cellH));
+  const r1 = Math.min(rows - 1, Math.ceil((cam + vis + bleed) / cellH + 2));
   const i0 = rowStart[r0], i1 = rowStart[r1 + 1];
 
   let pulseOn = false;
@@ -1134,7 +1170,7 @@ function render(cam, front, T, nowMs, materialization = null) {
     const hi = h <= 0 ? 0 : h >= 1 ? hq1 : (h * hq1 + 0.5) | 0;
     const sc = SC[i], dw = sw * sc, dh = sh * sc;
     const x = Math.round(GX[i] * dpr - dw * 0.5);
-    const y = Math.round((GY[i] + viewH * 0.025 - cam) * dpr - dh * 0.5);
+    const y = Math.round((GY[i] + viewH * 0.025 - winTop) * dpr - dh * 0.5);
     ctx.globalAlpha = a;
     ctx.drawImage(atl, (bi * HQ + hi) * sw, CH[i] * sh, sw, sh, x, y, dw, dh);
   }
@@ -1216,9 +1252,23 @@ function start() {
 
 /* ───────────────────────── events ───────────────────────── */
 let rt = 0;
+const LAYOUT_SELECTORS = ['.investigation-section', '.robot-section', '.shock-section',
+  '.bike-stunt-section', '.soccer-section', '.paattoholic-section'];
+let builtSignature = '';
+function layoutSignature() {
+  const sy = window.scrollY || 0;
+  let sig = String(Math.round(page?.scrollHeight || 0));
+  for (const sel of LAYOUT_SELECTORS) {
+    const el = document.querySelector(sel);
+    sig += '|' + (el ? Math.round(el.getBoundingClientRect().top + sy) : '-');
+  }
+  return sig;
+}
 function scheduleWorldRebuild() {
   clearTimeout(rt);
   rt = setTimeout(() => {
+    // Never rebuild mid-scroll: wait until the page has been still for a moment.
+    if (performance.now() - lastScrollAt < 250) { scheduleWorldRebuild(); return; }
     const dprNow = computeDPR(W, CVH || innerHeight);
     // All world-space positions, section bounds, and glyph rows are measured
     // from the same viewport dimensions. Updating only the fixed canvas height
@@ -1231,7 +1281,11 @@ function scheduleWorldRebuild() {
     const viewportChanged = Math.abs(innerWidth - W) > 1 ||
       (IS_MOBILE ? heightDelta > VH * 0.3 : heightDelta > 1);
     const pixelRatioChanged = dprNow !== DPR;
-    if (viewportChanged || pixelRatioChanged) build();
+    // Section positions drive the shock/robot/bike/soccer/paattoholic geometry. Lazy
+    // images and late fonts move them without any resize, so also rebuild when the
+    // measured layout differs from what the world was built against.
+    const layoutChanged = layoutSignature() !== builtSignature;
+    if (viewportChanged || pixelRatioChanged || layoutChanged) build();
     else sizeCanvas();
     if (reduced) drawStatic();
   }, 200);
