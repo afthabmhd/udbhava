@@ -12,9 +12,18 @@
   let sourcePixels = null;
   let framePixels = null;
   let context = null;
+  let sourcePixels32 = null;
+  let framePixels32 = null;
   let lastProgressStep = -1;
   let lastContactStep = -1;
+  let lastPutImageDataAt = -Infinity;
   let completed = false;
+  const touchDevice = matchMedia('(pointer: coarse)').matches;
+  const minFrameInterval = 36;
+  const littleEndian = new Uint8Array(new Uint32Array([0x01020304]).buffer)[0] === 4;
+  const rgbMask = littleEndian ? 0x00ffffff : 0xffffff00;
+  const alphaMask = littleEndian ? 0xff000000 : 0x000000ff;
+  const alphaShift = littleEndian ? 24 : 0;
   const hand = { x: .087, y: .44 };
 
   function smoothstep(value) {
@@ -74,7 +83,7 @@
 
   function prepareReveal() {
     if (arrivalMap || !image.complete || !image.naturalWidth) return;
-    const maxWidth = 768;
+    const maxWidth = touchDevice ? 384 : 768;
     const width = Math.min(image.naturalWidth, maxWidth);
     const height = Math.round(width * image.naturalHeight / image.naturalWidth);
     revealCanvas.width = width;
@@ -84,6 +93,8 @@
     context.drawImage(image, 0, 0, width, height);
     sourcePixels = context.getImageData(0, 0, width, height);
     framePixels = context.createImageData(width, height);
+    sourcePixels32 = new Uint32Array(sourcePixels.data.buffer);
+    framePixels32 = new Uint32Array(framePixels.data.buffer);
     arrivalMap = createArrivalMap(width, height);
     const handX = getComputedStyle(image).getPropertyValue('--hand-x').trim();
     const handY = getComputedStyle(image).getPropertyValue('--hand-y').trim();
@@ -94,19 +105,23 @@
 
   function drawMaterialization(progress, contactPulse, nowMs) {
     if (!arrivalMap) prepareReveal();
-    if (!context || !sourcePixels || !framePixels || !arrivalMap) return;
+    if (!context || !sourcePixels32 || !framePixels32 || !arrivalMap) return;
     const progressStep = Math.floor(progress * 180);
     const contactStep = Math.floor(contactPulse * 24);
     if (progressStep === lastProgressStep && contactStep === lastContactStep) return;
+    const isFinalFrame = progress >= 1 && !completed;
+    if (!isFinalFrame && nowMs - lastPutImageDataAt < minFrameInterval) return;
     lastProgressStep = progressStep;
     lastContactStep = contactStep;
+    lastPutImageDataAt = nowMs;
 
-    const { width, height, data: source } = sourcePixels;
-    const output = framePixels.data;
+    const { width, height } = sourcePixels;
+    const source = sourcePixels32;
+    const output = framePixels32;
     const handX = hand.x * width;
     const handY = hand.y * height;
     const pulseRadius = width * .085;
-    for (let index = 0, pixel = 0; index < arrivalMap.length; index += 1, pixel += 4) {
+    for (let index = 0; index < arrivalMap.length; index += 1) {
       const reveal = smoothstep((progress - arrivalMap[index] + .035) / .075);
       let pulseReveal = 0;
       if (contactPulse > .002) {
@@ -116,12 +131,12 @@
         const dy = y - handY;
         pulseReveal = contactPulse * Math.exp(-(dx * dx + dy * dy) / (pulseRadius * pulseRadius * 1.5)) * .82;
       }
-      output[pixel] = source[pixel];
-      output[pixel + 1] = source[pixel + 1];
-      output[pixel + 2] = source[pixel + 2];
       // Preserve the source cutout alpha throughout the materialization sweep
       // so the artist stays transparent outside the actual silhouette.
-      output[pixel + 3] = Math.round(source[pixel + 3] * Math.max(reveal, pulseReveal));
+      const sourcePixel = source[index];
+      const sourceAlpha = littleEndian ? sourcePixel >>> 24 : sourcePixel & 0xff;
+      const alpha = Math.round(sourceAlpha * Math.max(reveal, pulseReveal));
+      output[index] = (sourcePixel & rgbMask) | ((alpha << alphaShift) & alphaMask);
     }
     context.putImageData(framePixels, 0, 0);
     if (progress >= 1 && !completed) {
@@ -130,9 +145,6 @@
       section.classList.remove('is-materializing');
     }
   }
-
-  if (image.complete) prepareReveal();
-  else image.addEventListener('load', prepareReveal, { once: true });
 
   if (reducedMotion) {
     section.classList.add('is-materialized', 'is-revealed');
@@ -156,7 +168,9 @@
     if (!entries.some(entry => entry.isIntersecting)) return;
     trigger();
     observer.disconnect();
-  }, { threshold: .08, rootMargin: '0px 0px -4% 0px' });
+    if (image.complete) prepareReveal();
+    else if (typeof image.decode === 'function') image.decode().then(prepareReveal).catch(() => {});
+  }, { threshold: .08, rootMargin: '100% 0px 100% 0px' });
   observer.observe(section);
   window.addEventListener('udbhava:paattoholic-materialization-complete', () => {
     section.classList.add('is-materialized', 'is-revealed');
