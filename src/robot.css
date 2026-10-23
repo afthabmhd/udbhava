@@ -154,9 +154,7 @@
 
 @media (max-width: 380px) {
   .robot-section,.robot-content { min-height: auto; }
-  .robot-content { padding-right: 4vw; padding-left: 4vw; }
   .robot-content h2,.robot-finish { font-size: clamp(2.65rem, 11.6vw, 3.15rem); }
-  .robot-stage { height: 320px; }
   .robot-vehicle { width: 29vw; }
 }
 
