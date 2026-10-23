@@ -25,7 +25,8 @@
   function feeCaption(value) {
     if (!value) return 'Fee not available';
     const fee = String(value).trim();
-    return /^(free\b|nil\b)/i.test(fee) || fee.startsWith('₹') ? fee : `₹${fee}`;
+    if (/^(free\b|nil\b)/i.test(fee) || fee.startsWith('₹')) return fee;
+    return /^\d/.test(fee) ? `₹${fee}` : fee;
   }
 
   function requiresPayment(event) {
@@ -130,6 +131,30 @@
     return { input, errorNode };
   }
 
+  function checkboxField(form, { key, label, hint }) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'registration-checkbox-field';
+    const labelNode = document.createElement('label');
+    const input = document.createElement('input');
+    input.id = `registration-${key}`;
+    input.name = key;
+    input.type = 'checkbox';
+    input.value = 'yes';
+    const labelText = document.createElement('span');
+    labelText.textContent = label;
+    labelNode.htmlFor = input.id;
+    labelNode.append(input, labelText);
+    wrapper.append(labelNode);
+    if (hint) {
+      const hintNode = document.createElement('p');
+      hintNode.className = 'field-hint';
+      hintNode.textContent = hint;
+      wrapper.append(hintNode);
+    }
+    form.append(wrapper);
+    return input;
+  }
+
   function normalizePhone(value) {
     if (value.startsWith('+91')) return value.slice(3);
     if (value.startsWith('0')) return value.slice(1);
@@ -169,6 +194,11 @@
   }
 
   function showRegistrationState(event) {
+    if (event.registration_state === 'spot-only') {
+      statePanel.textContent = 'Spot registration only. Online registration is closed; register at the event spot.';
+      statePanel.hidden = false;
+      return true;
+    }
     if (event.registration_state === 'closed') {
       statePanel.textContent = 'Registration closed';
       statePanel.hidden = false;
@@ -242,6 +272,11 @@
       type: 'text', autocomplete: 'off', placeholder: schoolAudience ? 'Optional school ID or admission number' : 'Your college registration number',
       required: !schoolAudience
     });
+    const hostelAccommodation = checkboxField(form, {
+      key: 'require_hostel_accommodation',
+      label: 'Require hostel accommodation',
+      hint: 'Check for Yes; leave unchecked for No.'
+    });
 
     if (event.department_id !== 'udbhava') form.append(renderPayment(event));
     if (requiresPayment(event)) {
@@ -268,6 +303,7 @@
       errorPanel.hidden = true;
       errorPanel.textContent = '';
       const values = Object.fromEntries(Object.entries(fieldNodes).map(([key, item]) => [key, item.input.value.trim()]));
+      values.require_hostel_accommodation = hostelAccommodation.checked;
       if (!validateClient(values, fieldNodes, event)) {
         Object.values(fieldNodes).find(item => item.input.getAttribute('aria-invalid') === 'true')?.input.focus();
         return;

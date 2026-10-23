@@ -23,7 +23,7 @@
     ads: { code: 'AI&DS', accent: '#8a8fff', logo: 'sankalpa' }
   };
   const departmentOrder = ['udbhava', 'cse', 'ece', 'eee', 'mech', 'civil', 'ads'];
-  const registrationLabels = { closed: 'Registration closed', 'not-open': 'Registration unavailable', open: 'Register' };
+  const registrationLabels = { closed: 'Registration closed', 'not-open': 'Registration unavailable', 'spot-only': 'Spot registration only', open: 'Register' };
   const networkArt = '<svg viewBox="0 0 340 200" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m170 43-72 39 4 54 67 35 72-39-2-53-69-36Z" stroke="currentColor" stroke-width="2"/><path d="m98 82 71 39 72-42m-69-36v78m-66 15 66-39 69 14m-67 25v35" stroke="currentColor"/><circle cx="170" cy="43" r="5" fill="#080610" stroke="currentColor" stroke-width="2"/><circle cx="98" cy="82" r="5" fill="#080610" stroke="currentColor" stroke-width="2"/><circle cx="241" cy="81" r="5" fill="#080610" stroke="currentColor" stroke-width="2"/><circle cx="102" cy="136" r="5" fill="#080610" stroke="currentColor" stroke-width="2"/><circle cx="241" cy="132" r="5" fill="#080610" stroke="currentColor" stroke-width="2"/><circle cx="169" cy="171" r="5" fill="#080610" stroke="currentColor" stroke-width="2"/></svg>';
 
   let events = [];
@@ -43,7 +43,8 @@
   function formatFee(value) {
     if (!value) return 'Not available';
     const fee = String(value).trim();
-    return /^(free\b|nil\b)/i.test(fee) || fee.startsWith('₹') ? fee : `₹${fee}`;
+    if (/^(free\b|nil\b)/i.test(fee) || fee.startsWith('₹')) return fee;
+    return /^\d/.test(fee) ? `₹${fee}` : fee;
   }
 
   function formatEventDates(event) {
@@ -244,7 +245,8 @@
     addFact('FEE', formatFee(event.registration_fee));
     addFact('VENUE', event.venue);
     addFact('CONTACT', event.contact_numbers);
-    if (event.department_id === 'udbhava') addFact('REGISTRATION', 'Spot registration. Any fee is collected at the registration spot.');
+    if (event.registration_state === 'spot-only') addFact('REGISTRATION', 'Spot registration only. Online registration is closed; register and pay at the event spot.');
+    else if (event.department_id === 'udbhava') addFact('REGISTRATION', 'Spot registration. Any fee is collected at the registration spot.');
     else if (eventType(event) === 'competitions') addFact('REGISTRATION', 'Online and spot registration available.');
     const prizesSection = document.getElementById('dialog-prizes-section');
     const prizesList = document.getElementById('dialog-prizes');
@@ -257,7 +259,9 @@
     document.getElementById('dialog-rules-section').hidden = true;
     const registration = document.getElementById('dialog-registration');
     const registerButton = document.getElementById('dialog-register-button');
-    registration.textContent = event.department_id === 'udbhava' && event.registration_state === 'open'
+    registration.textContent = event.registration_state === 'spot-only'
+      ? 'Spot registration only. Online registration is closed; register at the event spot.'
+      : event.department_id === 'udbhava' && event.registration_state === 'open'
       ? 'Spot registration is available. Any fee is collected at the registration spot.'
       : event.registration_state === 'open'
       ? 'Registration is open. Complete the form to reserve your place.'

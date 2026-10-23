@@ -31,6 +31,7 @@ EVENT_FIELDS = (
 )
 REGISTRATION_FIELDS = (
     "department_id", "event_slug", "name", "college", "phone", "college_reg_no", "upi_txn_id",
+    "require_hostel_accommodation",
 )
 MAX_BODY_BYTES = 5 * 1024
 SECURITY_HEADERS = {
@@ -126,9 +127,9 @@ def load_public_events(path: Path | None = None) -> list[dict[str, object]]:
             source_state = (row.get("Registration State") or "").strip().lower()
             if None in row or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug) or slug in seen:
                 raise ValueError("udbhava_events.csv contains an invalid or duplicate event slug")
-            if department not in DEPARTMENTS or source_state not in {"open", "closed", "n/a"}:
+            if department not in DEPARTMENTS or source_state not in {"open", "closed", "spot-only", "n/a"}:
                 raise ValueError("udbhava_events.csv contains invalid department or registration state data")
-            state = source_state if source_state in {"open", "closed"} else "not-open"
+            state = source_state if source_state in {"open", "closed", "spot-only"} else "not-open"
             event = {
                 "slug": slug,
                 "name": _available(row.get("Event Name")),
@@ -171,14 +172,19 @@ def _clean_string(value: object, field: str, errors: dict[str, str]) -> str:
     return value.strip()
 
 
-def validate_registration(payload: object, event: dict[str, object]) -> dict[str, str]:
+def validate_registration(payload: object, event: dict[str, object]) -> dict[str, str | bool]:
     if not isinstance(payload, dict):
         raise RequestError(400, "invalid_request")
     required = {"slug", "name", "college", "phone", "college_reg_no", "website"}
     if event_requires_payment(event):
         required.add("upi_txn_id")
-    if set(payload) != required:
+    if not required.issubset(payload) or set(payload) - required - {"require_hostel_accommodation"}:
         raise RequestError(400, "invalid_request")
+    hostel_accommodation = payload.get("require_hostel_accommodation", False)
+    if not isinstance(hostel_accommodation, bool):
+        raise RequestError(400, "invalid_request", {
+            "require_hostel_accommodation": "Select yes or no."
+        })
     errors: dict[str, str] = {}
     school_audience = str(event.get("audience") or "").strip().casefold() == "school students"
     trap = payload.get("website")
@@ -222,6 +228,7 @@ def validate_registration(payload: object, event: dict[str, object]) -> dict[str
         clean["upi_txn_id"] = ""
     if errors:
         raise RequestError(400, "invalid_request", errors)
+    clean["require_hostel_accommodation"] = hostel_accommodation
     return clean
 
 
@@ -267,7 +274,7 @@ def _duplicate_error(field: str) -> RequestError:
     })
 
 
-def insert_registration(event: dict[str, object], values: dict[str, str], mode: str | None = None) -> None:
+def insert_registration(event: dict[str, object], values: dict[str, str | bool], mode: str | None = None) -> None:
     """Insert through Supabase PostgREST using only server-side credentials."""
     base_url = os.environ.get("SUPABASE_URL", "").strip().rstrip("/")
     service_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
@@ -285,6 +292,7 @@ def insert_registration(event: dict[str, object], values: dict[str, str], mode: 
         "phone": values["phone"],
         "college_reg_no": values["college_reg_no"] or None,
         "upi_txn_id": values["upi_txn_id"] or None,
+        "require_hostel_accommodation": values.get("require_hostel_accommodation", False),
     }
     request = Request(
         f"{base_url}/rest/v1/{table}",

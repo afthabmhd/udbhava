@@ -79,11 +79,11 @@ The visual identity relies heavily on canvas/glyph effects in nebula-engine.js a
 Based on the current implementation and project notes/code:
 
 - Event registration route and event lookup by slug: implemented.
-- Event form fields and server-side validation: implemented; phone, registration number, participant name/college, and UPI references for fees not marked free are validated.
+- Event form fields and server-side validation: implemented; phone, registration number, participant name/college, hostel accommodation preference, and UPI references for fees not marked free are validated.
 - Registration-open state: driven only by Registration State. Closed events are refused by the client and server.
 - Registration persistence: implemented through Supabase, with separate test and live tables.
 - Department QR codes: selected from src/qr by department and displayed on every open event form; charged-fee events request a UPI transaction reference.
-- Supabase schema/RLS/service-key integration: implemented.
+- Supabase schema/RLS/service-key integration: implemented; registration rows include a boolean `require_hostel_accommodation` field, defaulting to false for existing records.
 - Razorpay integration: not implemented in the current server or client.
 - Registration result/status administration, email confirmation, refunds, and payment reconciliation: not implemented.
 - Security controls include strict request origin checking, payload validation, an in-memory rate limiter, honeypot handling, duplicate checks, CSV formula escaping, and response security headers. CORS is not enabled as a general cross-origin API.

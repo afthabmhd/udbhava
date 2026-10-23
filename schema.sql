@@ -8,6 +8,7 @@ create table if not exists public.registrations (
     phone text not null,
     college_reg_no text not null,
     upi_txn_id text,
+    require_hostel_accommodation boolean not null default false,
     status text not null default 'pending',
     constraint registrations_event_slug_college_reg_no_key unique (event_slug, college_reg_no),
     constraint registrations_status_check check (status in ('pending', 'verified', 'rejected'))
@@ -27,6 +28,7 @@ create table if not exists public.test_registrations (
     phone text not null,
     college_reg_no text not null,
     upi_txn_id text,
+    require_hostel_accommodation boolean not null default false,
     status text not null default 'pending',
     constraint test_registrations_event_slug_college_reg_no_key unique (event_slug, college_reg_no),
     constraint test_registrations_status_check check (status in ('pending', 'verified', 'rejected'))
@@ -37,6 +39,12 @@ alter table public.registrations alter column college drop not null;
 alter table public.registrations alter column college_reg_no drop not null;
 alter table public.test_registrations alter column college drop not null;
 alter table public.test_registrations alter column college_reg_no drop not null;
+
+-- Add the hostel requirement to existing registration tables without changing prior records.
+alter table public.registrations
+    add column if not exists require_hostel_accommodation boolean not null default false;
+alter table public.test_registrations
+    add column if not exists require_hostel_accommodation boolean not null default false;
 
 create unique index if not exists test_registrations_upi_txn_id_uidx
     on public.test_registrations (upi_txn_id)
