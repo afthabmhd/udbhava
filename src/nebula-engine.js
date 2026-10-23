@@ -170,13 +170,6 @@ function buildAtlas() {
 function build() {
   builtSignature = layoutSignature();
   W = innerWidth; VH = innerHeight; viewH = VH;
-  const lastExitSection = document.querySelector('.last-exit-section');
-  lastExitBounds = null;
-  if (lastExitSection) {
-    const rect = lastExitSection.getBoundingClientRect();
-    const scrollY = window.scrollY || 0;
-    lastExitBounds = { topY: rect.top + scrollY, bottomY: rect.bottom + scrollY };
-  }
   const investigationSection = document.querySelector('.investigation-section');
   const robotSection = document.querySelector('.robot-section');
   if (robotSection) {
@@ -229,6 +222,42 @@ function build() {
       fieldTop: arenaTop + (arenaHeight - fieldHeight) * .5,
       fieldWidth,
       fieldHeight
+    };
+  }
+  const lastExitArt = document.querySelector('.last-exit-section');
+  lastExitBounds = null;
+  if (lastExitArt) {
+    const rect = lastExitArt.getBoundingClientRect();
+    const art = lastExitArt.querySelector('.last-exit-art');
+    const artRect = art?.getBoundingClientRect();
+    const img = art?.querySelector('img');
+    const titleRect = lastExitArt.querySelector('.last-exit-title-group')?.getBoundingClientRect();
+    const scrollY = window.scrollY || 0;
+    const sourceWidth = img?.naturalWidth || 1433;
+    const sourceHeight = img?.naturalHeight || 1098;
+    const fit = artRect ? Math.min(artRect.width / sourceWidth, artRect.height / sourceHeight) : 0;
+    const artWidth = sourceWidth * fit;
+    const artHeight = sourceHeight * fit;
+    const artLeft = artRect ? artRect.left + (artRect.width - artWidth) * .5 : rect.left;
+    const artTop = artRect ? artRect.top + (artRect.height - artHeight) * .5 + scrollY : rect.top + scrollY;
+    lastExitBounds = {
+      topY: rect.top + scrollY,
+      bottomY: rect.bottom + scrollY,
+      left: rect.left,
+      width: rect.width,
+      titleLeft: titleRect?.left ?? rect.left,
+      titleRight: titleRect?.right ?? rect.right,
+      titleTop: (titleRect?.top ?? rect.top) + scrollY,
+      titleBottom: (titleRect?.bottom ?? rect.bottom) + scrollY,
+      artLeft,
+      artTop,
+      artWidth,
+      artHeight,
+      doorX: artLeft + artWidth * .655,
+      doorTopY: artTop + artHeight * .36,
+      thresholdY: artTop + artHeight * .765,
+      floorEndX: artLeft + artWidth * .025,
+      floorEndY: artTop + artHeight * .985
     };
   }
   const paattoholicSection = document.querySelector('.paattoholic-section');
@@ -901,25 +930,81 @@ function build() {
     }
   }
 
-  // Civil / Last Exit is a quiet interval in the same page-wide nebula field.
-  // Shape the density by document position so it tapers out on entry, remains
-  // clear through the section, and returns at the lower edge without a clock.
   if (lastExitBounds) {
-    const sectionH = Math.max(1, lastExitBounds.bottomY - lastExitBounds.topY);
-    for (let r = 0; r < rows; r++) {
+    const firstRow = clamp(Math.floor(lastExitBounds.topY / cellH), 0, rows - 1);
+    const lastRow = clamp(Math.ceil(lastExitBounds.bottomY / cellH), 0, rows - 1);
+    for (let r = firstRow; r <= lastRow; r++) {
       const y = (r + .5) * cellH;
       if (y < lastExitBounds.topY || y > lastExitBounds.bottomY) continue;
-      const progress = (y - lastExitBounds.topY) / sectionH;
-      const fieldAmount = Math.max(1 - smooth(0, .24, progress), smooth(.76, 1, progress));
+      const progress = (y - lastExitBounds.topY) / Math.max(1, lastExitBounds.bottomY - lastExitBounds.topY);
+      // Keep the page stream faintly connected at the section edges, while
+      // leaving the title side dark enough to match the reference composition.
+      const nebulaAmount = Math.min(1, .3 + .7 * Math.max(1 - smooth(0, .16, progress), smooth(.84, 1, progress)));
       const base = r * cols;
       for (let c = 0; c < cols; c++) {
         const idx = base + c;
-        D[idx] *= fieldAmount;
-        STR[idx] *= fieldAmount;
-        FLA[idx] *= fieldAmount;
-        SOCCER[idx] *= fieldAmount;
-        MATLGrid[idx] *= fieldAmount;
-        MATXGrid[idx] *= fieldAmount;
+        const x = (c + .5) * cellW;
+        const titleClearance = Math.exp(-.5 * (((x - (lastExitBounds.titleLeft + lastExitBounds.titleRight) * .5)
+          / Math.max(W * .17, (lastExitBounds.titleRight - lastExitBounds.titleLeft) * .84)) ** 2
+          + ((y - (lastExitBounds.titleTop + lastExitBounds.titleBottom) * .5)
+          / Math.max(VH * .12, (lastExitBounds.titleBottom - lastExitBounds.titleTop) * .9)) ** 2));
+        const titleKeep = 1 - .88 * titleClearance;
+        const artU = lastExitBounds.artWidth > 0 ? (x - lastExitBounds.artLeft) / lastExitBounds.artWidth : 0;
+        const artV = lastExitBounds.artHeight > 0 ? (y - lastExitBounds.artTop) / lastExitBounds.artHeight : 0;
+        const doorCenterY = (lastExitBounds.doorTopY + lastExitBounds.thresholdY) * .5;
+        const doorOpening = Math.exp(-.5 * (((x - lastExitBounds.doorX) / Math.max(1, lastExitBounds.artWidth * .105)) ** 2
+          + ((y - doorCenterY) / Math.max(1, lastExitBounds.artHeight * .19)) ** 2));
+        const doorKeep = 1 - .9 * doorOpening;
+        const artWindow = lastExitBounds.artWidth > 0 && lastExitBounds.artHeight > 0
+          ? smooth(-.12, .08, artU) * (1 - smooth(.92, 1.12, artU))
+            * smooth(-.08, .06, artV) * (1 - smooth(.96, 1.08, artV))
+          : 0;
+        const artFieldKeep = 1 - .94 * artWindow;
+        let density = D[idx] * nebulaAmount * titleKeep * doorKeep * artFieldKeep;
+        let signal = STR[idx] * nebulaAmount * titleKeep * doorKeep * artFieldKeep;
+        let flare = FLA[idx] * nebulaAmount * titleKeep * doorKeep * artFieldKeep;
+
+        // Shape the shared glyph renderer into the reference's falling code
+        // column and the broad, diagonal light trail on the floor.
+        if (lastExitBounds.artWidth > 0 && y >= lastExitBounds.artTop && y <= lastExitBounds.floorEndY) {
+          const columnProgress = clamp(artV / .78, 0, 1);
+          // Send the code stream on a clear S-curve toward the frame's left edge,
+          // then turn it away from the opening before it reaches the threshold.
+          const columnU = .46 + .14 * smooth(0, .38, columnProgress)
+            - .09 * smooth(.38, .72, columnProgress)
+            - .18 * smooth(.72, 1, columnProgress)
+            + .035 * Math.sin(Math.PI * columnProgress * 1.2);
+          const columnX = lastExitBounds.artLeft + lastExitBounds.artWidth * columnU;
+          const columnWidth = lastExitBounds.artWidth * (.06 + .014 * Math.sin(artV * 7));
+          const columnNoise = .58 + .42 * fbm(artU * 10 + 31, artV * 8 + 17, 3);
+          const column = .84 * Math.exp(-1.7 * ((x - columnX) / Math.max(cellW * 2, columnWidth)) ** 2)
+            * (1 - .3 * smooth(.54, .82, artV)) * columnNoise * doorKeep;
+
+          const floorDY = lastExitBounds.floorEndY - lastExitBounds.thresholdY;
+          const floorT = clamp((y - lastExitBounds.thresholdY) / Math.max(1, floorDY), 0, 1);
+          const floorX = lerp(lastExitBounds.doorX, lastExitBounds.floorEndX, floorT)
+            + lastExitBounds.artWidth * .085 * Math.sin(Math.PI * floorT);
+          const floorY = lastExitBounds.thresholdY + floorT * floorDY;
+          const floorWidth = lastExitBounds.artWidth * lerp(.035, .105, floorT);
+          const floorNoise = .55 + .45 * fbm(artU * 14 + 81, artV * 12 + 49, 3);
+          const floorFade = Math.exp(-2.1 * floorT) * (1 - smooth(.92, 1, floorT) * .35);
+          const spill = .9 * Math.exp(-1.8 * (((x - floorX) / Math.max(cellW * 1.5, floorWidth)) ** 2
+            + ((y - floorY) / Math.max(cellH * 2.2, floorWidth * .4)) ** 2)) * floorFade * floorNoise;
+
+          const doorHalo = .34 * Math.exp(-1.5 * (((x - lastExitBounds.doorX) / (lastExitBounds.artWidth * .13)) ** 2
+            + ((y - lastExitBounds.thresholdY) / (lastExitBounds.artHeight * .12)) ** 2));
+          const sceneField = Math.max(column, spill, doorHalo);
+          density = Math.max(density, sceneField);
+          signal = Math.max(signal, sceneField * .86);
+          flare = Math.max(flare, Math.max(spill * .92, doorHalo));
+        }
+
+        D[idx] = density;
+        STR[idx] = signal;
+        FLA[idx] = flare;
+        SOCCER[idx] *= nebulaAmount;
+        MATLGrid[idx] *= nebulaAmount;
+        MATXGrid[idx] *= nebulaAmount;
       }
     }
   }
@@ -1189,6 +1274,21 @@ function render(cam, front, T, nowMs, materialization = null) {
       const tendril = STRG[i];
       a *= heartbeat * (1 + surge * (.25 + .95 * tendril + .55 * terminalFlash));
       h = lerp(h, 1, surge * (.18 + .66 * terminalFlash + .28 * tendril));
+    }
+    if (lastExitBounds && pageY >= lastExitBounds.artTop && pageY <= lastExitBounds.floorEndY) {
+      const pulse = .5 + .5 * Math.sin(nowMs * .00125 + PH[i]);
+      const doorGlow = Math.exp(-1.6 * (((GX[i] - lastExitBounds.doorX) / Math.max(1, lastExitBounds.artWidth * .13)) ** 2
+        + ((pageY - lastExitBounds.thresholdY) / Math.max(1, lastExitBounds.artHeight * .12)) ** 2));
+      const floorDY = lastExitBounds.floorEndY - lastExitBounds.thresholdY;
+      const floorT = clamp((pageY - lastExitBounds.thresholdY) / Math.max(1, floorDY), 0, 1);
+      const floorX = lerp(lastExitBounds.doorX, lastExitBounds.floorEndX, floorT)
+        + lastExitBounds.artWidth * .085 * Math.sin(Math.PI * floorT);
+      const floorY = lastExitBounds.thresholdY + floorT * floorDY;
+      const floorBand = Math.exp(-1.7 * (((GX[i] - floorX) / Math.max(1, lastExitBounds.artWidth * lerp(.035, .1, floorT))) ** 2
+        + ((pageY - floorY) / Math.max(1, lastExitBounds.artHeight * .045)) ** 2)) * Math.exp(-1.8 * floorT);
+      const light = Math.max(doorGlow, floorBand * .8);
+      h = lerp(h, 1, light * (.18 + .24 * pulse));
+      a = Math.min(1, a * (1 + light * (.08 + .12 * pulse)));
     }
     if (MATL[i] > .01) {
       let strandVisibility = 0;
