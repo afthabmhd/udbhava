@@ -136,6 +136,7 @@ let bikeStuntBounds = null;
 let bikeStuntReadyFired = false;
 let soccerBounds = null;
 let soccerNebulaReadyFired = false;
+let lastExitBounds = null;
 let paattoholicBounds = null;
 let paattoholicMaterializationStartedAt = null;
 let paattoholicMaterializationComplete = false;
@@ -169,6 +170,13 @@ function buildAtlas() {
 function build() {
   builtSignature = layoutSignature();
   W = innerWidth; VH = innerHeight; viewH = VH;
+  const lastExitSection = document.querySelector('.last-exit-section');
+  lastExitBounds = null;
+  if (lastExitSection) {
+    const rect = lastExitSection.getBoundingClientRect();
+    const scrollY = window.scrollY || 0;
+    lastExitBounds = { topY: rect.top + scrollY, bottomY: rect.bottom + scrollY };
+  }
   const investigationSection = document.querySelector('.investigation-section');
   const robotSection = document.querySelector('.robot-section');
   if (robotSection) {
@@ -893,6 +901,29 @@ function build() {
     }
   }
 
+  // Civil / Last Exit is a quiet interval in the same page-wide nebula field.
+  // Shape the density by document position so it tapers out on entry, remains
+  // clear through the section, and returns at the lower edge without a clock.
+  if (lastExitBounds) {
+    const sectionH = Math.max(1, lastExitBounds.bottomY - lastExitBounds.topY);
+    for (let r = 0; r < rows; r++) {
+      const y = (r + .5) * cellH;
+      if (y < lastExitBounds.topY || y > lastExitBounds.bottomY) continue;
+      const progress = (y - lastExitBounds.topY) / sectionH;
+      const fieldAmount = Math.max(1 - smooth(0, .24, progress), smooth(.76, 1, progress));
+      const base = r * cols;
+      for (let c = 0; c < cols; c++) {
+        const idx = base + c;
+        D[idx] *= fieldAmount;
+        STR[idx] *= fieldAmount;
+        FLA[idx] *= fieldAmount;
+        SOCCER[idx] *= fieldAmount;
+        MATLGrid[idx] *= fieldAmount;
+        MATXGrid[idx] *= fieldAmount;
+      }
+    }
+  }
+
   /* ── pass 2: glyph placement, contour-following selection ── */
   const cap = total;
   GX = new Float32Array(cap); GY = new Float32Array(cap); S = new Float32Array(cap);
@@ -1267,7 +1298,7 @@ function start() {
 /* ───────────────────────── events ───────────────────────── */
 let rt = 0;
 const LAYOUT_SELECTORS = ['.investigation-section', '.robot-section', '.shock-section',
-  '.bike-stunt-section', '.soccer-section', '.paattoholic-section'];
+  '.bike-stunt-section', '.soccer-section', '.last-exit-section', '.paattoholic-section'];
 let builtSignature = '';
 // Section events (robot, bike, soccer, paattoholic, investigation) compare the reveal
 // front with bounds measured in build(). If those bounds were measured before images and
