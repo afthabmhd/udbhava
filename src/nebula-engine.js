@@ -1052,7 +1052,7 @@ function targetFront(cam, nowMs) {
 const PI_ = new Float32Array(12);
 function paattoholicMaterializationAt(nowMs) {
   if (paattoholicMaterializationStartedAt === null || !paattoholicBounds) return null;
-  const progress = clamp((nowMs - paattoholicMaterializationStartedAt) / 3800, 0, 1);
+  const progress = clamp((nowMs - paattoholicMaterializationStartedAt) / 5200, 0, 1);
   return {
     progress,
     reach: .015 + .985 * smooth(0, .29, progress),
@@ -1200,7 +1200,7 @@ function loop(now) {
     window.dispatchEvent(new Event('udbhava:nebula-reveal-complete'));
   }
   const front = targetFront(cam, now);
-  if (!investigationFocusFired && investigationHubY !== null && front >= investigationHubY) {
+  if (layoutReady && !investigationFocusFired && investigationHubY !== null && front >= investigationHubY) {
     investigationFocusFired = true;
     window.__udbhavaInvestigationFocusReached = true;
     window.dispatchEvent(new CustomEvent('udbhava:investigation-focus', { detail: { y: investigationHubY } }));
@@ -1208,7 +1208,7 @@ function loop(now) {
   // Trigger the robot as the shared front reaches its track, not from a second
   // section observer or a separate animation clock.
   const robotReadyY = robotBounds ? robotBounds.topY + viewH * 0.35 : Infinity;
-  if (robotBounds && !robotTrackReadyFired && front >= robotReadyY) {
+  if (layoutReady && robotBounds && !robotTrackReadyFired && front >= robotReadyY) {
     robotTrackReadyFired = true;
     window.__udbhavaRobotTrackReady = true;
     window.dispatchEvent(new Event('udbhava:robot-track-ready'));
@@ -1218,7 +1218,7 @@ function loop(now) {
   const bikeStuntReadyY = bikeStuntBounds
     ? bikeStuntBounds.topY + Math.min(viewH * 0.58, (bikeStuntBounds.bottom - bikeStuntBounds.topY) * 0.30)
     : Infinity;
-  if (bikeStuntBounds && !bikeStuntReadyFired && front >= bikeStuntReadyY) {
+  if (layoutReady && bikeStuntBounds && !bikeStuntReadyFired && front >= bikeStuntReadyY) {
     bikeStuntReadyFired = true;
     window.__udbhavaBikeStuntNebulaReady = true;
     window.dispatchEvent(new Event('udbhava:bike-stunt-nebula-ready'));
@@ -1226,7 +1226,7 @@ function loop(now) {
   // Robot Soccer waits for the same document-wide reveal front to reach its
   // play area. The background remains the one shared canvas field.
   const soccerReadyY = soccerBounds ? soccerBounds.playfieldY : Infinity;
-  if (soccerBounds && !soccerNebulaReadyFired && front >= soccerReadyY) {
+  if (layoutReady && soccerBounds && !soccerNebulaReadyFired && front >= soccerReadyY) {
     soccerNebulaReadyFired = true;
     window.__udbhavaSoccerNebulaReady = true;
     window.dispatchEvent(new Event('udbhava:soccer-nebula-ready'));
@@ -1255,6 +1255,26 @@ let rt = 0;
 const LAYOUT_SELECTORS = ['.investigation-section', '.robot-section', '.shock-section',
   '.bike-stunt-section', '.soccer-section', '.paattoholic-section'];
 let builtSignature = '';
+// Section events (robot, bike, soccer, paattoholic, investigation) compare the reveal
+// front with bounds measured in build(). If those bounds were measured before images and
+// fonts settled, the events fire early and the animations play at the wrong place.
+// So: no section event is dispatched until the page has loaded, fonts are ready, and the
+// bounds have been re-measured once.
+let layoutReady = false;
+function markLayoutReady() {
+  if (layoutReady) return;
+  if (layoutSignature() !== builtSignature) build();
+  layoutReady = true;
+}
+(function waitForLayout() {
+  const loaded = document.readyState === 'complete'
+    ? Promise.resolve()
+    : new Promise(r => addEventListener('load', r, { once: true }));
+  const fonts = document.fonts?.ready || Promise.resolve();
+  const done = () => requestAnimationFrame(() => requestAnimationFrame(markLayoutReady));
+  Promise.all([loaded, fonts]).then(done, done);
+  setTimeout(markLayoutReady, 4000); // safety net so animations can never be blocked forever
+})();
 function layoutSignature() {
   const sy = window.scrollY || 0;
   let sig = String(Math.round(page?.scrollHeight || 0));
