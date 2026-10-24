@@ -186,7 +186,7 @@
     registration.className = 'event-card__register';
     registration.dataset.eventRegister = '';
     registration.dataset.registrationState = event.registration_state;
-    registration.textContent = event.slug === 'ads-robot-expo'
+    registration.textContent = ['ads-robot-expo', 'udbhava-paattoholic-pro-show'].includes(event.slug)
       ? 'No registration required'
       : event.registration_state === 'open' && event.department_id === 'udbhava'
       ? 'Spot Registration'
@@ -248,6 +248,7 @@
     addFact('VENUE', event.venue);
     addFact('CONTACT', event.contact_numbers);
     if (event.slug === 'ads-robot-expo') addFact('REGISTRATION', 'No registration required. The exhibition is open to festival participants and visitors.');
+    else if (event.slug === 'udbhava-paattoholic-pro-show') addFact('REGISTRATION', 'No registration required.');
     else if (event.registration_state === 'spot-only') addFact('REGISTRATION', 'Spot registration only. Online registration is closed; register and pay at the event spot.');
     else if (event.department_id === 'udbhava') addFact('REGISTRATION', 'Spot registration. Any fee is collected at the registration spot.');
     else if (eventType(event) === 'competitions') addFact('REGISTRATION', 'Online and spot registration available.');
@@ -264,6 +265,8 @@
     const registerButton = document.getElementById('dialog-register-button');
     registration.textContent = event.slug === 'ads-robot-expo'
       ? 'No registration is required to visit this exhibition.'
+      : event.slug === 'udbhava-paattoholic-pro-show'
+      ? 'No registration is required for this show.'
       : event.registration_state === 'spot-only'
       ? 'Spot registration only. Online registration is closed; register at the event spot.'
       : event.department_id === 'udbhava' && event.registration_state === 'open'

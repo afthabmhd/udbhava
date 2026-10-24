@@ -115,7 +115,7 @@ class RegistrationServerTests(unittest.TestCase):
     def test_api_returns_mapped_public_fields_and_normalizes_n_a(self):
         status, result, headers = self.request("GET", "/api/events")
         self.assertEqual(status, 200)
-        self.assertEqual(len(result["events"]), 71)
+        self.assertEqual(len(result["events"]), 72)
         self.assertEqual(tuple(result["events"][0]), service.EVENT_FIELDS)
         serialized = json.dumps(result)
         self.assertNotIn("SUPABASE", serialized)
@@ -143,11 +143,14 @@ class RegistrationServerTests(unittest.TestCase):
         self.assertIn("Maximum robot weight: 5kg", by_slug["ads-robo-soccer-5kg"]["description"])
         self.assertEqual(by_slug["ads-robot-expo"]["registration_state"], "not-open")
         self.assertEqual(by_slug["ads-robot-expo"]["event_time"], "10:00 AM - 4:00 PM")
+        self.assertEqual(by_slug["udbhava-paattoholic-pro-show"]["event_dates"], ["29/10/2026"])
+        self.assertEqual(by_slug["udbhava-paattoholic-pro-show"]["event_time"], "7:00 PM")
+        self.assertEqual(by_slug["udbhava-paattoholic-pro-show"]["registration_state"], "not-open")
         udbhava = [event for event in result["events"] if event["department_id"] == "udbhava"]
-        self.assertEqual(len(udbhava), 6)
+        self.assertEqual(len(udbhava), 7)
         self.assertEqual(sum(event["audience"] == "School Students" for event in udbhava), 4)
         self.assertTrue(all(event["audience"] is None for event in result["events"] if event["department_id"] != "udbhava"))
-        self.assertTrue(all(event["registration_state"] == "open" for event in udbhava))
+        self.assertTrue(all(event["registration_state"] == "open" for event in udbhava if event["slug"] != "udbhava-paattoholic-pro-show"))
         self.assertFalse(any(service.event_requires_payment(event) for event in udbhava))
         for event in udbhava:
             self.assertEqual(self.request("GET", f"/src/assets/events/{event['slug']}.webp")[0], 200)
