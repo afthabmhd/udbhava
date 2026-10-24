@@ -1,26 +1,38 @@
-# Deployment setup
+# Udbhava ’26 setup
 
-1. Run the updated schema.sql in the configured Supabase project to allow school registration rows to omit school name or registration number. The script creates both registration tables where needed, applies the nullable-column migration to existing tables, retains unique constraints and the status check, and enables RLS with no client policies. The API does not modify status.
-2. In the Supabase project settings, copy the project URL and service-role key. Do not use the anon key for server functions and do not add either value to browser files or git.
-3. Create a Vercel project from this repository with the repository root as the project root. The project configuration runs `python build.py`, serves `public/`, discovers the Python functions in api/, and includes `udbhava_events.csv` in each function bundle. Current Vercel build images include Python 3.12, so no alternate build is needed.
-4. Add these environment variables in Vercel Project Settings for the environments where registration should work: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, REGISTRATION_MODE, and SITE_ORIGIN. Set REGISTRATION_MODE to test first; use live only when ready for real registrations. SITE_ORIGIN must be the full production origin, including https and the domain, with no trailing slash. Set Vercel's Preview environment separately; preview deployments are accepted only outside production.
-5. Deploy a Preview and check the event list, registration route, a test registration, and the Vercel function logs. Test mode writes only to test_registrations. Test using unique sample data and remove it from the Supabase dashboard afterward if appropriate.
-6. Payment QR images are supplied under src/qr/. For each department, file 1 is the primary QR and file 2 is the fallback. UDBHAVA-level events use spot registration and do not display online payment QR codes or request UPI references; other charged events use their department pair. The event's Registration Fee is shown as supplied with a rupee prefix when it is not already marked free; the site does not calculate a payment total from fee text.
-7. After reviewing the test table entries and confirming payment/admin procedures, set REGISTRATION_MODE to live in Vercel Production settings and deploy. The function then writes to registrations.
+## Admin dashboard go-live steps
 
-The Supabase project is named `udhbava` and is in Mumbai; its schema is applied. No registration rows have been inserted. The site does not provide payment verification; paid submissions remain pending until a human updates status in the Supabase dashboard.
+1. **Back up both registration tables first.** In Supabase, export `public.registrations` and `public.test_registrations` as CSVs, or run `pg_dump "$SUPABASE_DB_URL" --data-only --table=public.registrations --table=public.test_registrations --file=registrations-before-admin.sql`. Keep the exports outside the repository. No database data was changed while implementing this dashboard.
+2. In the Supabase SQL editor, run the new `admin_schema.sql`. It creates only `events` and `admin_audit`; it does not alter either registrations table.
+3. Run the event import dry run from the repository root: `python scripts/import_events_to_supabase.py --dry-run`. Confirm 72 rows and review the department and state totals.
+4. After reviewing the dry run, set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in your shell, then run `python scripts/import_events_to_supabase.py`. It upserts only `public.events` by slug. Do not run `schema.sql` for this dashboard.
+5. Add these Vercel environment variables for the intended Preview and Production environments: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`, `ADMIN_EMAILS`, `REGISTRATION_MODE`, and `SITE_ORIGIN`. `ADMIN_EMAILS` is a comma-separated organizer email allow-list. Keep the service role key server-side; it is never included in browser assets.
+6. In Supabase Auth, disable public sign-ups and manually create the organizer email/password accounts. Add those exact email addresses to `ADMIN_EMAILS` (matching is case-insensitive).
+7. Deploy the `admin-dashboard` branch as a Vercel Preview. Set `REGISTRATION_MODE=test` for Preview and confirm it reads and updates only `test_registrations`. The active `TEST` or `LIVE` mode appears in the dashboard.
+8. Test the checklist below. Once approved, merge the branch through your normal review process and deploy. Set Production `REGISTRATION_MODE=live` only when organizers are ready to use `registrations`.
 
-## Payment QR files
+## Verification checklist
 
-- src/UPI/CSE 1.png and src/UPI/CSE 2.png
-- src/UPI/ADS 1.png and src/UPI/ADS 2.png
-- src/UPI/MECH 1.png and src/UPI/MECH 2.png
-- src/UPI/EEE 1.png and src/UPI/EEE 2.png
-- src/UPI/ECE 1.png and src/UPI/ECE 2.png
-- src/UPI/Civil 1.png and src/UPI/Civil 2.png
+- Sign in at `/admin`; non-allow-listed users are denied. A session token is held only in `sessionStorage`.
+- Edit an event, choose **Review changes**, verify the confirmation lists only changed fields as old → new, then click **Confirm**. The UI reports “Live on website”; verify `/events.html` and `/register/{slug}` reflect the edit within about 10 seconds without a redeploy.
+- Set an event to **Closed** and verify a new registration is rejected by the server.
+- Update a registration to **Confirmed** and verify the database value is `verified` (the existing database enum is retained). Check Pending, Confirmed, and Rejected counts and CSV export filters.
+- Compare registration row counts before and after. They must be unchanged; the admin API only patches `status` on a registration.
+- Verify the Preview dashboard displays `TEST`, then verify the Production dashboard displays `LIVE` only after its environment is configured.
 
-The Civil QR pair is enabled in the registration page; Civil registrations remain subject to the event's server-side open/closed state.
+## Configuration and behavior
+
+- `SUPABASE_URL`: Supabase project URL.
+- `SUPABASE_SERVICE_ROLE_KEY`: server-only key used by registration and admin APIs.
+- `SUPABASE_ANON_KEY`: Supabase Auth key used by server-side login and token verification.
+- `ADMIN_EMAILS`: comma-separated, case-insensitive organizer allow-list.
+- `REGISTRATION_MODE`: `test` for local/Preview, `live` for production (Vercel Production always selects live).
+- `SITE_ORIGIN`: full site origin, including `https://`, with no trailing slash.
+
+The event CSV remains a backup and runtime fallback if Supabase is unreachable. Supabase event values are converted to the same API shape as the existing CSV parser. Competition/type and fee are stored as text to preserve values such as “Extempore”, “Free / ₹75”, and “300 / person”. Event dates are stored as text arrays. `spot-only` and `n/a` are represented in the database as `spot_only` and `na` and mapped back for the public API. The public events response uses `Cache-Control: public, s-maxage=10, stale-while-revalidate=30`; registration validation fetches current Supabase event data on each request.
+
+Admin routes use Supabase Auth email/password, enforce `ADMIN_EMAILS`, rate-limit login attempts, and set `Cache-Control: no-store`. The Content Security Policy was not loosened: browser requests go only to this site’s `/api/admin/*` routes. The build copies only explicit public assets; `admin_schema.sql`, scripts, CSV source, and backups are not copied into `public/`.
 
 ## Local development
 
-Run `python build.py`, then `python server.py`. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in the local environment before testing registration; otherwise the API returns a generic unavailable response. REGISTRATION_MODE defaults to test when missing or invalid. Never use production data for local testing.
+Run `python build.py`, then `python server.py`. Configure the environment variables above in the local shell. Missing/unavailable Supabase event data falls back to the bundled CSV with a warning. Avoid using Production mode for local testing.

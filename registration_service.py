@@ -12,7 +12,7 @@ from datetime import datetime
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlsplit
+from urllib.parse import urlencode, urlsplit
 from urllib.request import Request, urlopen
 
 
@@ -159,7 +159,87 @@ def load_public_events(path: Path | None = None) -> list[dict[str, object]]:
 
 
 def events_by_slug() -> dict[str, dict[str, object]]:
-    return {str(event["slug"]): event for event in load_public_events()}
+    # Registration decisions must use the latest event state, with no stale cache.
+    return {str(event["slug"]): event for event in load_current_events()}
+
+
+def _event_from_database(row: object) -> dict[str, object]:
+    if not isinstance(row, dict):
+        raise ValueError("Supabase returned an invalid event")
+    slug = str(row.get("slug") or "").strip()
+    department = str(row.get("department_id") or "").strip().lower()
+    state = str(row.get("registration_state") or "").strip().lower()
+    if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug) or department not in DEPARTMENTS:
+        raise ValueError("Supabase returned invalid event identifiers")
+    state = {"spot_only": "spot-only", "na": "not-open"}.get(state, state)
+    if state not in {"open", "closed", "spot-only", "not-open"}:
+        raise ValueError("Supabase returned an invalid registration state")
+    raw_dates = row.get("event_dates")
+    if raw_dates is not None and not isinstance(raw_dates, list):
+        raise ValueError("Supabase returned invalid event dates")
+    dates = _parse_event_dates(", ".join(str(value) for value in raw_dates) if raw_dates else None)
+    time = _parse_event_time(row.get("event_time"))
+    event = {
+        "slug": slug,
+        "name": _available(row.get("name")),
+        "department_id": department,
+        "audience": _available(row.get("audience")),
+        "event_competition": _available(row.get("event_competition")),
+        "event_dates": dates,
+        "event_time": time,
+        "first_prize": _available(row.get("first_prize")),
+        "second_prize": _available(row.get("second_prize")),
+        "third_prize": _available(row.get("third_prize")),
+        "description": _available(row.get("description")),
+        "contact_numbers": _available(row.get("contact_numbers")),
+        "registration_fee": _available(row.get("registration_fee")),
+        "venue": _available(row.get("venue")),
+        "registration_state": state,
+    }
+    if not event["name"]:
+        raise ValueError("Supabase returned an incomplete event")
+    return event
+
+
+def load_supabase_events() -> list[dict[str, object]]:
+    base_url = os.environ.get("SUPABASE_URL", "").strip().rstrip("/")
+    service_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    if not base_url or not service_key:
+        raise SupabaseError("Supabase configuration is missing")
+    parsed = urlsplit(base_url)
+    if parsed.scheme != "https" or not parsed.netloc or parsed.username or parsed.password:
+        raise SupabaseError("Supabase URL must use HTTPS")
+    fields = (
+        "slug,name,department_id,audience,event_competition,event_dates,event_time,first_prize,"
+        "second_prize,third_prize,description,contact_numbers,registration_fee,venue,registration_state"
+    )
+    query = urlencode({"select": fields, "order": "department_id.asc,name.asc"})
+    request = Request(
+        f"{base_url}/rest/v1/events?{query}",
+        headers={"apikey": service_key, "Authorization": f"Bearer {service_key}"},
+        method="GET",
+    )
+    try:
+        with urlopen(request, timeout=8) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except (HTTPError, URLError, TimeoutError, OSError, UnicodeDecodeError, json.JSONDecodeError):
+        raise SupabaseError("Supabase events are unavailable") from None
+    if not isinstance(payload, list):
+        raise SupabaseError("Supabase returned an invalid event list")
+    events = [_event_from_database(row) for row in payload]
+    if len({event["slug"] for event in events}) != len(events):
+        raise ValueError("Supabase returned duplicate event slugs")
+    return events
+
+
+def load_current_events() -> list[dict[str, object]]:
+    try:
+        return load_supabase_events()
+    except (SupabaseError, OSError, ValueError) as exc:
+        # The CSV remains a fail-safe if Supabase is offline or its event table is not ready.
+        import sys
+        print(f"Warning: Supabase events unavailable ({exc}); using bundled CSV.", file=sys.stderr)
+        return load_public_events()
 
 
 def _reject_controls(value: str) -> bool:
@@ -344,11 +424,11 @@ class SecureRequestHandler(BaseHTTPRequestHandler):
         super().end_headers()
 
 
-def send_json(handler: BaseHTTPRequestHandler, status: int, payload: dict[str, object]) -> None:
+def send_json(handler: BaseHTTPRequestHandler, status: int, payload: dict[str, object], *, cache_control: str = "no-store") -> None:
     body = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     handler.send_response(status)
     handler.send_header("Content-Type", "application/json; charset=utf-8")
-    handler.send_header("Cache-Control", "no-store")
+    handler.send_header("Cache-Control", cache_control)
     handler.send_header("Content-Length", str(len(body)))
     handler.end_headers()
     handler.wfile.write(body)
@@ -368,7 +448,7 @@ def handle_events(handler: BaseHTTPRequestHandler) -> None:
         send_json(handler, 405, {"error": "method_not_allowed"})
         return
     try:
-        send_json(handler, 200, {"events": load_public_events()})
+        send_json(handler, 200, {"events": load_current_events()}, cache_control="public, s-maxage=10, stale-while-revalidate=30")
     except (OSError, ValueError):
         send_json(handler, 500, {"error": "event_data_unavailable"})
 
