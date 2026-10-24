@@ -20,7 +20,7 @@
     eee: { code: 'EEE', accent: '#bd65ff', logo: 'dyuthi' },
     mech: { code: 'MECH', accent: '#aa7bff', logo: 'yantra' },
     civil: { code: 'CIVIL', accent: '#9f83ff', logo: 'arcvil' },
-    ads: { code: 'AI&DS', accent: '#8a8fff', logo: 'sankalpa' }
+    ads: { code: 'ADS', accent: '#8a8fff', logo: 'sankalpa' }
   };
   const departmentOrder = ['udbhava', 'cse', 'ece', 'eee', 'mech', 'civil', 'ads'];
   const registrationLabels = { closed: 'Registration closed', 'not-open': 'Registration unavailable', 'spot-only': 'Spot registration only', open: 'Register' };
@@ -136,7 +136,7 @@
     imageFrame.setAttribute('aria-hidden', 'true');
     const image = document.createElement('img');
     image.className = 'event-card__image';
-    const imageSlug = event.slug === 'ece-robo-soccer' ? 'ads-robo-soccer' : event.slug;
+    const imageSlug = ['ece-robo-soccer', 'ads-robo-soccer-5kg'].includes(event.slug) ? 'ads-robo-soccer' : event.slug;
     image.src = `./src/assets/events/${imageSlug}.webp`;
     image.alt = '';
     image.loading = 'lazy';
@@ -186,7 +186,9 @@
     registration.className = 'event-card__register';
     registration.dataset.eventRegister = '';
     registration.dataset.registrationState = event.registration_state;
-    registration.textContent = event.registration_state === 'open' && event.department_id === 'udbhava'
+    registration.textContent = event.slug === 'ads-robot-expo'
+      ? 'No registration required'
+      : event.registration_state === 'open' && event.department_id === 'udbhava'
       ? 'Spot Registration'
       : registrationLabels[event.registration_state] || 'Registration status unavailable';
     if (event.registration_state === 'open') {
@@ -245,7 +247,8 @@
     addFact('FEE', formatFee(event.registration_fee));
     addFact('VENUE', event.venue);
     addFact('CONTACT', event.contact_numbers);
-    if (event.registration_state === 'spot-only') addFact('REGISTRATION', 'Spot registration only. Online registration is closed; register and pay at the event spot.');
+    if (event.slug === 'ads-robot-expo') addFact('REGISTRATION', 'No registration required. The exhibition is open to festival participants and visitors.');
+    else if (event.registration_state === 'spot-only') addFact('REGISTRATION', 'Spot registration only. Online registration is closed; register and pay at the event spot.');
     else if (event.department_id === 'udbhava') addFact('REGISTRATION', 'Spot registration. Any fee is collected at the registration spot.');
     else if (eventType(event) === 'competitions') addFact('REGISTRATION', 'Online and spot registration available.');
     const prizesSection = document.getElementById('dialog-prizes-section');
@@ -259,7 +262,9 @@
     document.getElementById('dialog-rules-section').hidden = true;
     const registration = document.getElementById('dialog-registration');
     const registerButton = document.getElementById('dialog-register-button');
-    registration.textContent = event.registration_state === 'spot-only'
+    registration.textContent = event.slug === 'ads-robot-expo'
+      ? 'No registration is required to visit this exhibition.'
+      : event.registration_state === 'spot-only'
       ? 'Spot registration only. Online registration is closed; register at the event spot.'
       : event.department_id === 'udbhava' && event.registration_state === 'open'
       ? 'Spot registration is available. Any fee is collected at the registration spot.'

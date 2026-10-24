@@ -99,8 +99,12 @@ def _parse_event_time(value: str | None) -> str | None:
     value = _available(value)
     if value is None:
         return None
+    times = re.split(r"\s+-\s+", value)
+    if len(times) not in {1, 2}:
+        raise ValueError("Invalid event time")
     try:
-        datetime.strptime(value, "%I:%M %p")
+        for time in times:
+            datetime.strptime(time, "%I:%M %p")
     except ValueError as exc:
         raise ValueError("Invalid event time") from exc
     return value
