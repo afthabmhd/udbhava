@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 PUBLIC = ROOT / "public"
 ROOT_FILES = (
-    "index.html", "events.html", "about.html", "registration.html", "admin.html", "404.html",
+    "index.html", "events.html", "about.html", "registration.html", "admin.html", "admin-reset.html", "404.html",
     "styles.css", "events.css", "about.css", "typography.css", "registration.css", "admin.css",
     "favicon.ico", "favicon.png",
 )

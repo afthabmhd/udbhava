@@ -25,6 +25,15 @@
         <button class="button button--primary" type="submit">Sign in</button>
       </form>
       <p id="login-error" class="admin-error" role="alert" hidden></p>
+      <button id="recovery-toggle" class="button button--quiet recovery-toggle" type="button">Set or reset password</button>
+      <form id="recovery-form" class="admin-form" hidden>
+        <p>We’ll email a secure link to the organizer address.</p>
+        <label>Email<input name="email" type="email" autocomplete="email" required></label>
+        <button class="button button--primary" type="submit">Send password link</button>
+        <button id="recovery-cancel" class="button button--quiet" type="button">Back to sign in</button>
+      </form>
+      <p id="recovery-message" class="admin-message" role="status" aria-live="polite" hidden></p>
+      <p id="recovery-error" class="admin-error" role="alert" hidden></p>
     </section>
     <section id="dashboard" hidden>
       <nav class="admin-tabs" aria-label="Admin sections">
@@ -49,6 +58,7 @@
   </main>
   <dialog id="confirm-dialog" class="confirm-dialog"><h2 id="dialog-title">Confirm changes</h2><p id="dialog-copy"></p><div id="change-list" class="change-list"></div><div class="dialog-actions"><button id="dialog-cancel" class="button button--quiet" type="button">Cancel</button><button id="dialog-confirm" class="button button--primary" type="button">Confirm</button></div></dialog>
   <div id="toast" class="admin-toast" role="status" aria-live="polite"></div>
+  <script src="/src/admin-recovery-redirect.js" defer></script>
   <script src="/src/admin.js" defer></script>
 </body>
 </html>

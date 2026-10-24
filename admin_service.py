@@ -175,6 +175,93 @@ def _login(handler):
     return {"access_token": token, "token_type": "bearer"}
 
 
+def _site_origin() -> str:
+    value = os.environ.get("SITE_ORIGIN", "").strip().rstrip("/")
+    parsed = urlsplit(value)
+    if (parsed.scheme != "https" or not parsed.netloc or parsed.username or parsed.password
+            or parsed.path not in {"", "/"} or parsed.query or parsed.fragment):
+        raise AdminError(503, "admin_unavailable")
+    return f"https://{parsed.netloc}"
+
+
+def _recover_password(handler):
+    payload = _read_body(handler)
+    if set(payload) != {"email"} or not isinstance(payload["email"], str):
+        raise AdminError(400, "invalid_request")
+    email = payload["email"].strip()
+    if (len(email) > 254 or not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email)
+            or any(ord(char) < 32 for char in email)):
+        raise AdminError(400, "invalid_request")
+
+    # Keep the endpoint non-enumerating and send recovery mail only to organizers.
+    if email.casefold() not in _allowlist():
+        return {"ok": True}
+
+    anon_key = os.environ.get("SUPABASE_ANON_KEY", "").strip()
+    if not anon_key:
+        raise AdminError(503, "admin_unavailable")
+    redirect_to = _site_origin()
+    query = urlencode({"redirect_to": redirect_to})
+    request = Request(
+        f"{_base_url()}/auth/v1/recover?{query}",
+        data=json.dumps({"email": email}).encode("utf-8"),
+        headers={"apikey": anon_key, "Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urlopen(request, timeout=8) as response:
+            response.read()
+    except HTTPError as exc:
+        if exc.code == 429:
+            raise AdminError(429, "recovery_rate_limited") from None
+        raise AdminError(503, "recovery_unavailable") from None
+    except (URLError, TimeoutError, OSError):
+        raise AdminError(503, "recovery_unavailable") from None
+    return {"ok": True}
+
+
+def _set_password(handler):
+    payload = _read_body(handler)
+    if set(payload) != {"access_token", "password"}:
+        raise AdminError(400, "invalid_request")
+    access_token = payload["access_token"]
+    password = payload["password"]
+    if (not isinstance(access_token, str) or not 32 <= len(access_token) <= 4096
+            or not isinstance(password, str) or not 12 <= len(password) <= 72):
+        raise AdminError(400, "password_not_accepted")
+
+    user = _auth_user(access_token)
+    email = user.get("email", "").strip() if isinstance(user, dict) else ""
+    if not email or email.casefold() not in _allowlist():
+        raise AdminError(401, "invalid_or_expired_reset_link")
+
+    anon_key = os.environ.get("SUPABASE_ANON_KEY", "").strip()
+    if not anon_key:
+        raise AdminError(503, "admin_unavailable")
+    request = Request(
+        f"{_base_url()}/auth/v1/user",
+        data=json.dumps({"password": password}).encode("utf-8"),
+        headers={
+            "apikey": anon_key,
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+        },
+        method="PUT",
+    )
+    try:
+        with urlopen(request, timeout=8) as response:
+            response.read()
+    except HTTPError as exc:
+        if exc.code in {400, 422}:
+            raise AdminError(400, "password_not_accepted") from None
+        if exc.code in {401, 403}:
+            raise AdminError(401, "invalid_or_expired_reset_link") from None
+        raise AdminError(503, "password_update_unavailable") from None
+    except (URLError, TimeoutError, OSError):
+        raise AdminError(503, "password_update_unavailable") from None
+    return {"ok": True}
+
+
 def _query_url(params: dict[str, object]) -> str:
     return urlencode(params, doseq=True, safe="*,()")
 
@@ -426,6 +513,16 @@ def dispatch(handler):
             if handler.command != "POST":
                 raise AdminError(405, "method_not_allowed")
             service.send_json(handler, 200, _login(handler))
+            return
+        if route == ["recover"]:
+            if handler.command != "POST":
+                raise AdminError(405, "method_not_allowed")
+            service.send_json(handler, 200, _recover_password(handler))
+            return
+        if route == ["password"]:
+            if handler.command != "POST":
+                raise AdminError(405, "method_not_allowed")
+            service.send_json(handler, 200, _set_password(handler))
             return
         auth_status, email = require_admin(handler.headers)
         if auth_status != 200:

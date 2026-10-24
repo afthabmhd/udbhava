@@ -68,6 +68,10 @@ class SiteHandler(SimpleHTTPRequestHandler):
             self.path = "/admin.html"
             super().do_GET()
             return
+        if path == "/admin/reset-password":
+            self.path = "/admin-reset.html"
+            super().do_GET()
+            return
         if path.startswith("/register/"):
             slug = path[len("/register/"):].strip("/")
             try:

@@ -328,6 +328,53 @@
       token = result.access_token; sessionStorage.setItem(tokenKey, token); showDashboard(); await activateTab('events');
     } catch (error) { $('#login-error').textContent = error.message || 'Sign-in failed. Try again.'; $('#login-error').hidden = false; }
   });
+  const recoveryForm = $('#recovery-form');
+  const recoveryEmail = recoveryForm.elements.email;
+  $('#recovery-toggle').addEventListener('click', () => {
+    recoveryForm.querySelector('button[type="submit"]').hidden = false;
+    recoveryEmail.value = $('#login-form').elements.email.value.trim();
+    $('#login-form').hidden = true;
+    $('#login-error').hidden = true;
+    $('#recovery-toggle').hidden = true;
+    $('#recovery-message').hidden = true;
+    $('#recovery-error').hidden = true;
+    recoveryForm.hidden = false;
+    recoveryEmail.focus();
+  });
+  $('#recovery-cancel').addEventListener('click', () => {
+    recoveryForm.hidden = true;
+    recoveryForm.querySelector('button[type="submit"]').hidden = false;
+    $('#login-form').hidden = false;
+    $('#recovery-toggle').hidden = false;
+    $('#recovery-message').hidden = true;
+    $('#recovery-error').hidden = true;
+  });
+  recoveryForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    const submit = recoveryForm.querySelector('button[type="submit"]');
+    const message = $('#recovery-message');
+    const error = $('#recovery-error');
+    submit.disabled = true;
+    message.hidden = true;
+    error.hidden = true;
+    try {
+      const response = await fetch('/api/admin/recover', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: recoveryEmail.value.trim() }), cache: 'no-store'
+      });
+      const result = await response.json().catch(() => ({}));
+      if (response.status === 429) throw new Error('Too many reset emails were requested. Please wait before trying again.');
+      if (!response.ok) throw new Error('Could not send a password link right now. Try again later.');
+      message.textContent = 'If this is an organizer account, a password link has been sent. Check the inbox and spam folder.';
+      message.hidden = false;
+      recoveryForm.querySelector('button[type="submit"]').hidden = true;
+    } catch (requestError) {
+      error.textContent = requestError.message || 'Could not send a password link right now. Try again later.';
+      error.hidden = false;
+    } finally {
+      submit.disabled = false;
+    }
+  });
   $('#logout-button').addEventListener('click', () => showLogin());
   document.querySelectorAll('.admin-tab').forEach(button => button.addEventListener('click', () => activateTab(button.dataset.tab)));
   $('#events-body').addEventListener('click', event => { const button = event.target.closest('button[data-slug]'); if (button) editEvent(button.dataset.slug); });

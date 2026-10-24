@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#10100f">
+  <title>Set password — UDBHAVA ’26</title>
+  <link rel="stylesheet" href="/typography.css">
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body class="admin-page">
+  <main class="admin-shell">
+    <header class="admin-header">
+      <a class="admin-brand" href="/">UDBHAVA <span>’26</span></a>
+    </header>
+    <section class="login-panel" aria-labelledby="reset-title">
+      <p class="eyebrow">ORGANIZER ACCESS</p>
+      <h1 id="reset-title">Set a password</h1>
+      <p>Choose a strong, unique password for your organizer account.</p>
+      <form id="reset-form" class="admin-form" hidden>
+        <label>New password<input name="password" type="password" autocomplete="new-password" minlength="12" maxlength="72" required></label>
+        <label>Confirm password<input name="confirm-password" type="password" autocomplete="new-password" minlength="12" maxlength="72" required></label>
+        <button class="button button--primary" type="submit">Save password</button>
+      </form>
+      <p id="reset-message" class="admin-message" role="status" aria-live="polite" hidden></p>
+      <p id="reset-error" class="admin-error" role="alert" hidden></p>
+      <a class="button button--quiet reset-back" href="/admin">Back to admin sign in</a>
+    </section>
+  </main>
+  <script src="/src/admin-reset.js" defer></script>
+</body>
+</html>
