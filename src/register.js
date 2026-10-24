@@ -228,6 +228,7 @@
   function formErrorForCode(code) {
     return ({
       registration_closed: 'Registration is closed for this event.',
+      event_seats_full: 'This event has reached its seat limit.',
       registration_not_open: 'Registration opens soon. Check back for updates.',
       registration_conflict: 'Already registered or payment already used.',
       try_again_later: 'Too many attempts. Please wait a moment and try again.',

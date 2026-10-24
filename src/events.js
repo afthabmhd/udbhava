@@ -245,6 +245,7 @@
     addFact('DEPARTMENT', department?.code || event.department_id.toUpperCase());
     addFact('EVENT', event.event_competition);
     addFact('FEE', formatFee(event.registration_fee));
+    addFact('SEATS', event.seats || 'Open');
     addFact('VENUE', event.venue);
     addFact('CONTACT', event.contact_numbers);
     if (event.slug === 'ads-robot-expo') addFact('REGISTRATION', 'No registration required. The exhibition is open to festival participants and visitors.');

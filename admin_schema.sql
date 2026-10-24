@@ -15,6 +15,7 @@ create table if not exists public.events (
     contact_numbers text,
     registration_fee text,
     venue text,
+    seats text not null default 'Open' check (seats = 'Open' or seats ~ '^[1-9][0-9]*( (participants?|teams?))?$'),
     registration_state text not null check (registration_state in ('open', 'closed', 'spot_only', 'na')),
     updated_at timestamptz not null default now()
 );

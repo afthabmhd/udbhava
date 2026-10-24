@@ -27,7 +27,7 @@ CSV_HEADERS = (
 EVENT_FIELDS = (
     "slug", "name", "department_id", "audience", "event_competition", "event_dates", "event_time",
     "first_prize", "second_prize", "third_prize", "description", "contact_numbers",
-    "registration_fee", "venue", "registration_state",
+    "registration_fee", "venue", "seats", "registration_state",
 )
 REGISTRATION_FIELDS = (
     "department_id", "event_slug", "name", "college", "phone", "college_reg_no", "upi_txn_id",
@@ -149,6 +149,7 @@ def load_public_events(path: Path | None = None) -> list[dict[str, object]]:
                 "contact_numbers": _available(row.get("Contact Numbers")),
                 "registration_fee": _available(row.get("Registration Fee")),
                 "venue": _available(row.get("Venue")),
+                "seats": "Open",
                 "registration_state": state,
             }
             if not event["name"]:
@@ -194,6 +195,7 @@ def _event_from_database(row: object) -> dict[str, object]:
         "contact_numbers": _available(row.get("contact_numbers")),
         "registration_fee": _available(row.get("registration_fee")),
         "venue": _available(row.get("venue")),
+        "seats": str(row.get("seats") or "Open"),
         "registration_state": state,
     }
     if not event["name"]:
@@ -211,7 +213,7 @@ def load_supabase_events() -> list[dict[str, object]]:
         raise SupabaseError("Supabase URL must use HTTPS")
     fields = (
         "slug,name,department_id,audience,event_competition,event_dates,event_time,first_prize,"
-        "second_prize,third_prize,description,contact_numbers,registration_fee,venue,registration_state"
+        "second_prize,third_prize,description,contact_numbers,registration_fee,venue,seats,registration_state"
     )
     query = urlencode({"select": fields, "order": "department_id.asc,name.asc"})
     request = Request(
@@ -404,6 +406,8 @@ def insert_registration(event: dict[str, object], values: dict[str, str | bool],
             constraint = " ".join(str(error.get(key, "")) for key in ("constraint", "message", "details"))
             field = "upi_txn_id" if "upi_txn_id" in constraint else "college_reg_no"
             raise _duplicate_error(field) from None
+        if error.get("message") == "event_seats_full":
+            raise RequestError(409, "event_seats_full") from None
         raise SupabaseError("Supabase request failed") from None
     except (URLError, TimeoutError, OSError):
         raise SupabaseError("Supabase is unavailable") from None

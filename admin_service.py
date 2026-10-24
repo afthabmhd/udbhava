@@ -25,7 +25,7 @@ REGISTRATION_FIELDS = (
 EVENT_EDIT_FIELDS = frozenset({
     "name", "department_id", "audience", "event_competition", "event_dates", "event_time",
     "first_prize", "second_prize", "third_prize", "description", "contact_numbers",
-    "registration_fee", "venue", "registration_state",
+    "registration_fee", "venue", "seats", "registration_state",
 })
 STATUS_TO_DB = {"pending": "pending", "confirmed": "verified", "rejected": "rejected"}
 DB_TO_STATUS = {value: key for key, value in STATUS_TO_DB.items()}
@@ -296,10 +296,21 @@ def validate_event_patch(payload: dict) -> dict:
         "name": 120, "department_id": 20, "audience": 100, "event_competition": 120,
         "event_time": 100, "first_prize": 300, "second_prize": 300, "third_prize": 300,
         "description": 10000, "contact_numbers": 1000, "registration_fee": 120, "venue": 300,
+        "seats": 40,
     }
     for field, value in payload.items():
         if field == "registration_state":
             result[field] = _parse_event_state(value)
+        elif field == "seats":
+            if not isinstance(value, str) or len(value) > max_lengths[field] or service._reject_controls(value):
+                raise AdminError(400, "invalid_event")
+            seats = value.strip()
+            if seats.casefold() == "open":
+                result[field] = "Open"
+            elif re.fullmatch(r"[1-9][0-9]*( (participants?|teams?))?", seats):
+                result[field] = seats
+            else:
+                raise AdminError(400, "invalid_event")
         elif field == "event_dates":
             if value is not None and (not isinstance(value, list) or any(not isinstance(item, str) for item in value)):
                 raise AdminError(400, "invalid_event")

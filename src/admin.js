@@ -138,7 +138,7 @@
       ['event_competition', 'Competition / type'], ['event_dates', 'Dates (comma separated)'],
       ['event_time', 'Time'], ['first_prize', 'First prize'], ['second_prize', 'Second prize'],
       ['third_prize', 'Third prize'], ['description', 'Description'], ['contact_numbers', 'Contact numbers'],
-      ['registration_fee', 'Registration fee'], ['venue', 'Venue'],
+      ['registration_fee', 'Registration fee'], ['venue', 'Venue'], ['seats', 'Seats (or Open)'],
     ];
     const form = document.createElement('form');
     form.className = 'event-edit-form';
@@ -153,7 +153,8 @@
       wrapper.append(text('span', label));
       const control = key === 'description' ? document.createElement('textarea') : document.createElement('input');
       control.name = key;
-      control.value = key === 'event_dates' ? (event.event_dates || []).join(', ') : (event[key] ?? '');
+      control.value = key === 'event_dates' ? (event.event_dates || []).join(', ') : (event[key] ?? (key === 'seats' ? 'Open' : ''));
+      if (key === 'seats') control.placeholder = 'Open, 40, or 36 teams';
       wrapper.append(control);
       form.append(wrapper);
       controls[key] = control;
@@ -221,7 +222,7 @@
     name: 'Name', department_id: 'Department', audience: 'Audience', event_competition: 'Competition / type',
     event_dates: 'Dates', event_time: 'Time', first_prize: 'First prize', second_prize: 'Second prize',
     third_prize: 'Third prize', description: 'Description', contact_numbers: 'Contact numbers',
-    registration_fee: 'Registration fee', venue: 'Venue', registration_state: 'Registration state'
+    registration_fee: 'Registration fee', venue: 'Venue', seats: 'Seats', registration_state: 'Registration state'
   };
 
   async function editEvent(slug) {
