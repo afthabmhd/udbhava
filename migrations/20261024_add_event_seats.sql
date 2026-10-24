@@ -18,7 +18,7 @@ $migration$;
 
 update public.events
 set seats = case slug
-    when 'civil-clay-studio' then '40 participants'
+    when 'civil-clay-studio' then '30 participants'
     when 'cse-offscript' then '50 participants'
     when 'cse-quizbuzz' then '36 teams'
     when 'cse-web-weaver' then '50 participants'
