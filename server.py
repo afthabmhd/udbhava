@@ -25,6 +25,13 @@ class SiteHandler(SimpleHTTPRequestHandler):
         service.add_security_headers(self)
         super().end_headers()
 
+    def log_message(self, format, *args):
+        # Search filters can contain a participant phone number; don't echo admin query strings.
+        if urlsplit(self.path).path.startswith("/api/admin/"):
+            super().log_message("%s %s", self.command, urlsplit(self.path).path)
+            return
+        super().log_message(format, *args)
+
     def list_directory(self, path):
         self.send_error(404, "Not found")
         return None
@@ -50,8 +57,16 @@ class SiteHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         path = unquote(urlsplit(self.path).path)
+        if path.startswith("/api/admin/"):
+            import admin_service
+            admin_service.dispatch(self)
+            return
         if path == "/api/events":
             service.handle_events(self)
+            return
+        if path == "/admin":
+            self.path = "/admin.html"
+            super().do_GET()
             return
         if path.startswith("/register/"):
             slug = path[len("/register/"):].strip("/")
@@ -69,10 +84,21 @@ class SiteHandler(SimpleHTTPRequestHandler):
         self._serve_public_path(path)
 
     def do_POST(self):
-        if urlsplit(self.path).path == "/api/register":
+        path = urlsplit(self.path).path
+        if path.startswith("/api/admin/"):
+            import admin_service
+            admin_service.dispatch(self)
+        elif path == "/api/register":
             service.handle_register(self)
-        elif urlsplit(self.path).path == "/api/events":
+        elif path == "/api/events":
             service.handle_events(self)
+        else:
+            service.send_json(self, 404, {"error": "not_found"})
+
+    def do_PATCH(self):
+        if urlsplit(self.path).path.startswith("/api/admin/"):
+            import admin_service
+            admin_service.dispatch(self)
         else:
             service.send_json(self, 404, {"error": "not_found"})
 

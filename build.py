@@ -9,8 +9,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 PUBLIC = ROOT / "public"
 ROOT_FILES = (
-    "index.html", "events.html", "about.html", "registration.html", "404.html",
-    "styles.css", "events.css", "about.css", "typography.css", "registration.css",
+    "index.html", "events.html", "about.html", "registration.html", "admin.html", "404.html",
+    "styles.css", "events.css", "about.css", "typography.css", "registration.css", "admin.css",
     "favicon.ico", "favicon.png",
 )
 SOURCE_ONLY_ASSETS = {

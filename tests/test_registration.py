@@ -120,7 +120,7 @@ class RegistrationServerTests(unittest.TestCase):
         serialized = json.dumps(result)
         self.assertNotIn("SUPABASE", serialized)
         self.assertNotIn("REGISTRATION_MODE", serialized)
-        self.assertEqual(headers["Cache-Control"], "no-store")
+        self.assertEqual(headers["Cache-Control"], "public, s-maxage=10, stale-while-revalidate=30")
         self.assertEqual(headers["X-Frame-Options"], "DENY")
         self.assertEqual(headers["Referrer-Policy"], "strict-origin-when-cross-origin")
         by_slug = {event["slug"]: event for event in result["events"]}
@@ -178,7 +178,8 @@ class RegistrationServerTests(unittest.TestCase):
         for event in service.load_public_events():
             if event["department_id"] == "udbhava":
                 with self.subTest(slug=event["slug"]):
-                    self.assertEqual(self.request("GET", f"/register/{event['slug']}")[0], 200)
+                    expected = 200 if event["registration_state"] == "open" else 404
+                    self.assertEqual(self.request("GET", f"/register/{event['slug']}")[0], expected)
 
     def test_all_pages_receive_a_csp_compatible_with_fonts_and_site_assets(self):
         for path in ("/index.html", "/events.html", "/about.html", "/registration.html", f"/register/{self.paid_slug}"):
@@ -191,6 +192,17 @@ class RegistrationServerTests(unittest.TestCase):
                 self.assertIn("https://fonts.gstatic.com", csp)
                 self.assertIn("img-src 'self' data:", csp)
                 self.assertIn("connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com", csp)
+
+    def test_admin_route_is_private_and_admin_responses_are_not_cached(self):
+        status, page, _ = self.request("GET", "/admin")
+        self.assertEqual(status, 200)
+        self.assertIn('name="robots" content="noindex,nofollow"', page.decode("utf-8"))
+        status, result, headers = self.request("GET", "/api/admin/events")
+        self.assertEqual(status, 401)
+        self.assertEqual(result["error"], "unauthorized")
+        self.assertEqual(headers["Cache-Control"], "no-store")
+        self.assertEqual(self.request("GET", "/admin.css")[0], 200)
+        self.assertEqual(self.request("GET", "/src/admin.js")[0], 200)
 
     def test_paid_registration_uses_supabase_stub_and_server_event_department(self):
         status, result, _ = self.request("POST", "/api/register", self.valid_payload())
@@ -357,7 +369,7 @@ class RegistrationServerTests(unittest.TestCase):
         self.assertIn("upi_txn_id", raised.exception.field_errors)
 
     def test_build_output_excludes_source_data_schema_and_env_files(self):
-        for blocked in ("udbhava_events.csv", "schema.sql", ".env.example", "server.py", "registration_service.py"):
+        for blocked in ("udbhava_events.csv", "schema.sql", "admin_schema.sql", ".env.example", "server.py", "registration_service.py", "backups"):
             self.assertFalse((build.PUBLIC / blocked).exists(), blocked)
         self.assertFalse((build.PUBLIC / "data").exists())
         for path in ("/udbhava_events.csv", "/schema.sql", "/.env.example", "/data/test.csv"):

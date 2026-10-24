@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#10100f">
+  <title>Organizer Admin — UDBHAVA ’26</title>
+  <link rel="stylesheet" href="/typography.css">
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body class="admin-page">
+  <main class="admin-shell">
+    <header class="admin-header">
+      <a class="admin-brand" href="/">UDBHAVA <span>’26</span></a>
+      <div class="admin-header__right"><span id="mode-badge" class="mode-badge" hidden></span><button id="logout-button" class="button button--quiet" type="button" hidden>Log out</button></div>
+    </header>
+    <section id="login-panel" class="login-panel" aria-labelledby="login-title">
+      <p class="eyebrow">ORGANIZER ACCESS</p>
+      <h1 id="login-title">Admin dashboard</h1>
+      <p>Sign in with your organizer account.</p>
+      <form id="login-form" class="admin-form">
+        <label>Email<input name="email" type="email" autocomplete="username" required></label>
+        <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+        <button class="button button--primary" type="submit">Sign in</button>
+      </form>
+      <p id="login-error" class="admin-error" role="alert" hidden></p>
+    </section>
+    <section id="dashboard" hidden>
+      <nav class="admin-tabs" aria-label="Admin sections">
+        <button class="admin-tab is-active" data-tab="events" type="button">Events</button>
+        <button class="admin-tab" data-tab="registrations" type="button">Registrations</button>
+      </nav>
+      <section id="events-panel" class="admin-panel">
+        <div class="panel-heading"><div><p class="eyebrow">LIVE CONTENT</p><h1>Events</h1></div><button id="events-refresh" class="button button--quiet" type="button">Refresh</button></div>
+        <div class="toolbar"><label>Search events<input id="event-search" type="search" placeholder="Name or slug"></label><label>Department<select id="event-department"><option value="">All departments</option></select></label><label>Registration state<select id="event-state"><option value="">All states</option><option value="open">Open</option><option value="closed">Closed</option><option value="spot-only">Spot only</option><option value="not-open">N/A</option></select></label></div>
+        <p id="events-message" class="admin-message" role="status"></p>
+        <div class="table-wrap"><table><thead><tr><th>Event</th><th>Department</th><th>State</th><th>Updated</th><th></th></tr></thead><tbody id="events-body"></tbody></table></div>
+      </section>
+      <section id="registrations-panel" class="admin-panel" hidden>
+        <div class="panel-heading"><div><p class="eyebrow">PAYMENT TRACKING</p><h1>Registrations</h1></div><div class="toolbar-actions"><button id="registrations-refresh" class="button button--quiet" type="button">Refresh</button><button id="export-button" class="button button--primary" type="button">Export CSV</button></div></div>
+        <div id="summary-cards" class="summary-cards"></div>
+        <div class="toolbar"><label>Event<select id="registration-event"><option value="">All events</option></select></label><label>Department<select id="registration-department"><option value="">All departments</option></select></label><label>Status<select id="registration-status"><option value="">All statuses</option><option>pending</option><option>confirmed</option><option>rejected</option></select></label><label>Search<input id="registration-search" type="search" placeholder="Name, college, phone or reg. no."></label></div>
+        <p id="registrations-message" class="admin-message" role="status"></p>
+        <div class="table-wrap"><table><thead><tr><th>Participant</th><th>Event</th><th>Department</th><th>Contact</th><th>Registration no.</th><th>UPI reference</th><th>Submitted</th><th>Status</th></tr></thead><tbody id="registrations-body"></tbody></table></div>
+        <div class="pagination"><button id="page-prev" class="button button--quiet" type="button">Previous</button><span id="page-label"></span><button id="page-next" class="button button--quiet" type="button">Next</button></div>
+      </section>
+    </section>
+  </main>
+  <dialog id="confirm-dialog" class="confirm-dialog"><h2 id="dialog-title">Confirm changes</h2><p id="dialog-copy"></p><div id="change-list" class="change-list"></div><div class="dialog-actions"><button id="dialog-cancel" class="button button--quiet" type="button">Cancel</button><button id="dialog-confirm" class="button button--primary" type="button">Confirm</button></div></dialog>
+  <div id="toast" class="admin-toast" role="status" aria-live="polite"></div>
+  <script src="/src/admin.js" defer></script>
+</body>
+</html>
